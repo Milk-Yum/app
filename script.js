@@ -68,7 +68,7 @@ function showWaitMessage(resetTime) {
 
     const resetDate = new Date(resetTime);
     
-    // ★ リセット日時をフォーマット
+    // リセット日時をフォーマット
     const resetDateString = resetDate.toLocaleDateString('ja-JP', {
         year: 'numeric',
         month: '2-digit',
@@ -81,7 +81,7 @@ function showWaitMessage(resetTime) {
         hour12: false 
     }); // 13:40 形式
     
-    // ★ 日付と時間をスペース1個で結合し、リセットメッセージとして使用
+    // 日付と時間をスペース1個で結合
     const resetDateTimeCombined = `${resetDateString} ${resetTimeString}`;
     
     const container = document.querySelector('.container');
@@ -115,7 +115,7 @@ function showWaitMessage(resetTime) {
                 </p>
                 
                 <p style="font-size: 14px; margin-top: 10px; white-space: nowrap;">
-                    リセット日時： <strong>${resetDateTimeCombined}</strong>
+                    リセット日時：<br><strong>${resetDateTimeCombined}</strong>
                 </p>
 
                 <button onclick="forceReset()" style="
