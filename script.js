@@ -1,7 +1,8 @@
 // --- 設定値 ---
-const DRAWN_URLS_KEY = 'tarotDrawnUrls'; 
+// ★ 履歴、リセット時間に関するキー名を「星」に関連する名前に変更
+const DRAWN_URLS_KEY = 'tarotDrawnStars'; 
 const DRAWN_URLS_LIMIT = 20;            
-const RESET_TIME_KEY = 'tarotResetTime'; 
+const RESET_TIME_KEY = 'tarotStarResetTime'; 
 const RESET_DURATION_MS = 24 * 60 * 60 * 1000; 
 let resetTimer = null; 
 
@@ -28,10 +29,11 @@ function displayCurrentDate() {
 }
 
 // ----------------------------------------------------
-// ★ 新機能: 強制リセット処理
+// ★ 新機能: 強制リセット処理 (「履歴」を「星」に置換)
 // ----------------------------------------------------
 function forceReset() {
-    if (confirm("本当に抽選履歴をリセットして、すぐに新しいカードを引きますか？\n（本日の抽選はリセットされます）")) {
+    // ★ テキスト修正: 「抽選履歴」を「星」に
+    if (confirm("本当に星をリセットして、すぐに新しいカードを引きますか？\n（本日の星はリセットされます）")) {
         // タイマーをクリア
         if (resetTimer) clearInterval(resetTimer); 
         
@@ -39,7 +41,8 @@ function forceReset() {
         localStorage.removeItem(DRAWN_URLS_KEY);
         localStorage.removeItem(RESET_TIME_KEY);
         
-        alert("履歴をリセットしました。再度抽選してください。");
+        // ★ テキスト修正: 「抽選」を「星」に
+        alert("星をリセットしました。再度星を引いてください。");
         window.location.reload(); // ページをリロードして初期状態に戻す
     }
 }
@@ -58,7 +61,8 @@ function showWaitMessage(resetTime) {
     if (diffMs <= 0) {
         localStorage.removeItem(DRAWN_URLS_KEY);
         localStorage.removeItem(RESET_TIME_KEY);
-        alert("抽選可能になりました。ページを更新します。");
+        // ★ テキスト修正: 「抽選」を「星」に
+        alert("星を引くことが可能になりました。ページを更新します。");
         window.location.reload();
         return;
     }
@@ -90,9 +94,9 @@ function showWaitMessage(resetTime) {
             container.innerHTML = `
                 <div id="dateDisplay"></div>
                 <h1>：ワンオラクル：<br>タロット占い</h1>
-                <p style="color: red; font-size: 20px;">本日のカードはすべて引かれました。</p>
+                <p style="color: red; font-size: 20px;">本日の星はすべて引かれました。</p>
                 <p style="margin-top: 30px;">
-                    <strong>星のチカラの回復まで</strong><br>
+                    <strong>星の回復まで</strong><br>
                     <strong>${remainingTimeText}</strong><br>
                     お待ちください。
                 </p>
@@ -108,7 +112,7 @@ function showWaitMessage(resetTime) {
                     cursor: pointer;
                     border-radius: 5px;
                 ">
-                    ★ リセットして今すぐ引き直す
+                    ★ リセットして今すぐ星を引く
                 </button>
             `;
             displayCurrentDate(); 
@@ -151,7 +155,7 @@ async function getRandomUrlAndRedirect() {
             .map(url => url.trim())
             .filter(url => url !== '' && !url.startsWith('#')); 
 
-        // 3. 履歴の読み込みと抽選リストの作成
+        // 3. 履歴の読み込みと抽選リストの作成 (DRAWN_URLS_KEY が変わったため、最初のアクセスでは空になります)
         let drawnUrls = JSON.parse(localStorage.getItem(DRAWN_URLS_KEY) || '[]');
         const eligibleUrls = urlList.filter(url => !drawnUrls.includes(url));
 
@@ -195,4 +199,3 @@ window.onload = function() {
         showWaitMessage(parseInt(savedResetTime, 10));
     }
 };
-
