@@ -33,12 +33,15 @@ function getNextResetTime() {
 function displayCurrentDate() {
     const now = new Date();
     
+    // ★ 修正: 月と日の表示からゼロ詰めを削除
     const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
+    const month = now.getMonth() + 1;
+    const day = now.getDate();
     
+    // 曜日を日本語で取得
     const weekday = new Intl.DateTimeFormat('ja-JP', { weekday: 'short' }).format(now);
     
+    // 形式を YYYY/M/D (曜日) に修正
     const dateString = `${year}/${month}/${day} (${weekday})`;
     
     const dateElement = document.getElementById('dateDisplay');
@@ -74,7 +77,7 @@ function showWaitMessage(resetTime) {
     }
     
     if (diffMs <= 0) {
-        // ★ リセット時間を過ぎていた場合、強制リセット
+        // リセット時間を過ぎていた場合、強制リセット
         localStorage.removeItem(DRAWN_URLS_KEY);
         localStorage.removeItem(RESET_TIME_KEY);
         alert("星を引くことが可能になりました。ページを更新します。");
@@ -84,15 +87,15 @@ function showWaitMessage(resetTime) {
 
     const resetDate = new Date(resetTime);
     
-    // リセット日時をフォーマット
+    // ★ 修正: 月、日、時の表示からゼロ詰めを削除
     const resetDateString = resetDate.toLocaleDateString('ja-JP', {
         year: 'numeric',
-        month: '2-digit',
-        day: '2-digit',
+        month: 'numeric', // '2-digit' -> 'numeric'
+        day: 'numeric',   // '2-digit' -> 'numeric'
         weekday: 'short'
     }).replace(/\//g, '/'); 
     const resetTimeString = resetDate.toLocaleTimeString('ja-JP', { 
-        hour: '2-digit', 
+        hour: 'numeric',  // '2-digit' -> 'numeric'
         minute: '2-digit', 
         hour12: false 
     }); 
@@ -111,7 +114,6 @@ function showWaitMessage(resetTime) {
             return;
         }
 
-        // ★ カウントダウンの計算と表示を修正
         const hours = Math.floor(diffMs / (1000 * 60 * 60));
         const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
         const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
@@ -122,7 +124,7 @@ function showWaitMessage(resetTime) {
             container.innerHTML = `
                 <div id="dateDisplay"></div>
                 <h1>：ワンオラクル：<br>タロット占い</h1>
-                <p style="color: red; font-size: 20px;">本日のカードはすべて引かれました。</p>
+                <p style="color: red; font-size: 20px;">カードの浄化が必要になりました</p>
                 <p style="margin-top: 30px;">
                     <strong>星の回復まで</strong><br>
                     <strong>${remainingTimeText}</strong><br>
@@ -193,7 +195,7 @@ async function getRandomUrlAndRedirect() {
         if (eligibleUrls.length === 0) {
             // 4A. 抽選可能なURLがない場合
             
-            // ★ リセット時間を固定値（次の0時/12時）に設定
+            // リセット時間を固定値（次の0時/12時）に設定
             const resetTime = getNextResetTime();
             localStorage.setItem(RESET_TIME_KEY, resetTime);
             
