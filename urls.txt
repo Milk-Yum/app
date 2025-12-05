@@ -18,4 +18,13 @@ https://milk-yum.github.io/shuffle/Strength_Upright.html
 https://milk-yum.github.io/shuffle/Strength_Reversed.html
 https://milk-yum.github.io/shuffle/Hermit_Upright.html
 https://milk-yum.github.io/shuffle/Hermit_Reversed.html
-
+https://milk-yum.github.io/shuffle/WheelofFortune_Upright.html
+https://milk-yum.github.io/shuffle/WheelofFortune_Reversed.html
+https://milk-yum.github.io/shuffle/Justice_Upright.html
+https://milk-yum.github.io/shuffle/Justice_Reversed.html
+https://milk-yum.github.io/shuffle/HangedMan_Upright.html
+https://milk-yum.github.io/shuffle/HangedMan_Reversed.html
+https://milk-yum.github.io/shuffle/Death_Upright.html
+https://milk-yum.github.io/shuffle/Death_Reversed.html
+https://milk-yum.github.io/shuffle/Temperance_Upright.html
+https://milk-yum.github.io/shuffle/Temperance_Reversed.html
