@@ -176,7 +176,7 @@
                 }
             } catch (e) { 
                 console.error(e);
-                if(e.message.includes("index")) alert("新しいインデックスが必要です。PCでURLを開いてください。");
+                if(e.message.includes("index")) alert("新しいインデックスが必要です。PCでURLを開いてください。" + e.message);
             }
         };
 
