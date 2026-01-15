@@ -6,6 +6,7 @@
     <title>Eki Bottle Mail (Debug)</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍾</text></svg>">
     <style>
+        /* CSSはindex.htmlと同様（station-boxのみ擬装用の赤いボーダー） */
         body { margin: 0; padding: 0; font-family: sans-serif; background: linear-gradient(180deg, #a1c4fd 0%, #c2e9fb 100%); min-height: 100vh; display: flex; flex-direction: column; align-items: center; color: #334d66; padding-bottom: 100px; }
         .container { width: 90%; max-width: 400px; margin-top: 20px; text-align: center; }
         .user-profile-wrapper { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 20px; }
@@ -40,7 +41,6 @@
         .reply-input-area { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
         .reply-input { font-size: 14px; height: 60px; border: 1px solid #eee; border-radius: 10px; padding: 8px; resize: none; }
         .btn-reply-send { background: #a1c4fd; color: white; border: none; padding: 12px; border-radius: 10px; font-size: 0.9rem; font-weight: bold; cursor: pointer; }
-        .btn-close { margin-top: 20px; background: #eee; border: none; padding: 10px 20px; border-radius: 20px; width: 100%; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -74,7 +74,8 @@
                 <div id="reply-list"></div>
                 <div class="reply-input-area" id="reply-form-area">
                     <textarea id="reply-input" class="reply-input" placeholder="返信を書く..."></textarea>
-                    <button id="reply-send-btn" class="btn-reply-send">返信して流す</button>
+                    <button id="reply-send-btn" class="btn-reply-send">擬装中の駅で流す</button>
+                    <button id="reply-refresh-send-btn" class="btn-reply-send" style="background: #5dade2;">駅名を入れ直して流す</button>
                 </div>
             </div>
             <div id="empty-message" style="display:none; padding:40px 0; color:#889">ボトルが見つかりませんでした</div>
@@ -112,9 +113,9 @@
             document.getElementById('my-name-display').innerText = myName;
         }
         window.resetNickname = () => { localStorage.setItem('ekiUserNickname', generateName()); location.reload(); };
-        window.resetAll = () => { if(confirm("全ての履歴と名前が消去されます。よろしいですか？")) { localStorage.clear(); location.reload(); } };
+        window.resetAll = () => { if(confirm("全データ消去？")) { localStorage.clear(); location.reload(); } };
         window.openSettings = () => document.getElementById('settings-overlay').style.display = 'flex';
-        window.closeModals = () => { document.querySelectorAll('.overlay').forEach(el => el.style.display = 'none'); };
+        window.closeModals = () => document.querySelectorAll('.overlay').forEach(el => el.style.display = 'none');
 
         window.debugChangeStation = () => {
             const choice = prompt("駅名を擬装:");
@@ -125,6 +126,24 @@
             }
         };
 
+        async function sendReply() {
+            const input = document.getElementById('reply-input');
+            if(!input.value || !currentBottleId) return;
+            const bSnap = await getDoc(doc(db, "bottles", currentBottleId));
+            await addDoc(collection(db, "replies"), { parentId: currentBottleId, text: input.value, senderName: myName, station: currentStation, createdAt: serverTimestamp() });
+            await updateDoc(doc(db, "bottles", currentBottleId), { station: currentStation });
+            saveHistory('myReplyBottles', currentBottleId, bSnap.data().text);
+            alert(`送信完了: ${currentStation}`); closeModals();
+            input.value = ""; loadAllHistories();
+        }
+
+        document.getElementById('reply-send-btn').onclick = sendReply;
+        document.getElementById('reply-refresh-send-btn').onclick = () => {
+            debugChangeStation(); // 擬装し直してから送信
+            sendReply();
+        };
+
+        // ...以下、Firebase取得・履歴描画ロジックはindex.htmlと同等（省略せずに記述）...
         document.getElementById('send-btn').onclick = async () => {
             const input = document.getElementById('message-input');
             if(!input.value) return;
@@ -148,20 +167,9 @@
                 document.getElementById('picked-text').innerText = data.text;
                 document.getElementById('picked-station').innerText = data.station + ' にて';
                 content.style.display = 'block';
-                document.getElementById('reply-form-area').style.display = 'flex'; // 返信フォームを表示
+                document.getElementById('reply-form-area').style.display = 'flex';
                 loadReplies(target.id, document.getElementById('reply-list'));
             } else { empty.style.display = 'block'; }
-        };
-
-        document.getElementById('reply-send-btn').onclick = async () => {
-            const input = document.getElementById('reply-input');
-            if(!input.value || !currentBottleId) return;
-            const bSnap = await getDoc(doc(db, "bottles", currentBottleId));
-            await addDoc(collection(db, "replies"), { parentId: currentBottleId, text: input.value, senderName: myName, station: currentStation, createdAt: serverTimestamp() });
-            await updateDoc(doc(db, "bottles", currentBottleId), { station: currentStation });
-            saveHistory('myReplyBottles', currentBottleId, bSnap.data().text);
-            alert("返信完了"); closeModals();
-            input.value = ""; loadAllHistories();
         };
 
         function saveHistory(key, id, text) {
@@ -196,7 +204,7 @@
             const overlay = document.getElementById('bottle-overlay');
             document.getElementById('bottle-content').style.display = 'block';
             document.getElementById('empty-message').style.display = 'none';
-            document.getElementById('reply-form-area').style.display = 'none'; // 履歴閲覧時は返信不可
+            document.getElementById('reply-form-area').style.display = 'none';
             overlay.style.display = 'flex';
             const d = await getDoc(doc(db, "bottles", id));
             if (d.exists()) {
