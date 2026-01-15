@@ -45,6 +45,11 @@
 
         .btn-reply-send { background: #a1c4fd; color: white; border: none; padding: 12px; border-radius: 10px; font-size: 0.9rem; font-weight: bold; cursor: pointer; width: 100%; }
         .btn-close { margin-top: 20px; background: #eee; border: none; padding: 10px 20px; border-radius: 20px; width: 100%; cursor: pointer; }
+        
+        /* リセットボタンのスタイル */
+        .debug-reset-area { margin-top: 40px; margin-bottom: 20px; }
+        .btn-reset { color: #e74c3c; background: none; border: 1px solid #e74c3c; padding: 5px 15px; border-radius: 10px; cursor: pointer; font-size: 0.7rem; opacity: 0.7; }
+        .btn-reset:hover { background: #ffeaea; opacity: 1; }
     </style>
 </head>
 <body>
@@ -71,6 +76,10 @@
         <div class="history-section">
             <div class="history-title">📩 返信したボトル</div>
             <div id="my-replies-list"></div>
+        </div>
+
+        <div class="debug-reset-area">
+            <button class="btn-reset" onclick="localStorage.clear(); location.reload();">全ローカルデータをリセット</button>
         </div>
     </div>
 
@@ -120,7 +129,12 @@
         let myName = "";
 
         function initMyName() {
-            myName = localStorage.getItem('ekiUserNickname') || "デバッグさん";
+            const savedName = localStorage.getItem('ekiUserNickname');
+            if (savedName) { myName = savedName; } 
+            else {
+                myName = "デバッグさん";
+                localStorage.setItem('ekiUserNickname', myName);
+            }
             document.getElementById('my-name-display').innerText = myName;
         }
 
@@ -154,7 +168,7 @@
             const q = query(collection(db, "bottles"), where("station", "==", currentStation), limit(10));
             const snap = await getDocs(q);
             if(!snap.empty) {
-                const target = snap.docs[0];
+                const target = snap.docs[Math.floor(Math.random() * snap.size)];
                 currentBottleId = target.id;
                 const data = target.data();
                 senderDisplay.innerText = data.senderName;
@@ -162,15 +176,18 @@
                 stationDisplay.innerText = data.station + ' にて';
                 document.getElementById('current-station-name').innerText = currentStation;
                 loadReplies(target.id, replyList);
-            } else { textDisplay.innerText = "なし"; }
+            } else { textDisplay.innerText = "この駅にはボトルがありませんでした。"; }
         };
 
         document.getElementById('reply-send-btn').onclick = async () => {
             const input = document.getElementById('reply-input');
-            if(!input.value) return;
+            if(!input.value || !currentBottleId) return;
+            const bSnap = await getDoc(doc(db, "bottles", currentBottleId));
             await addDoc(collection(db, "replies"), { 
                 parentId: currentBottleId, text: input.value, senderName: myName, station: currentStation, createdAt: serverTimestamp() 
             });
+            await updateDoc(doc(db, "bottles", currentBottleId), { station: currentStation });
+            saveHistory('myReplyBottles', currentBottleId, bSnap.data().text);
             alert("返信完了"); document.getElementById('overlay').style.display = 'none';
             input.value = ""; loadAllHistories();
         };
@@ -190,7 +207,7 @@
         function renderHistory(key, elementId) {
             const div = document.getElementById(elementId);
             const list = JSON.parse(localStorage.getItem(key) || '[]');
-            div.innerHTML = list.length ? "" : "<p>なし</p>";
+            div.innerHTML = list.length ? "" : "<p style='font-size:0.75rem; color:#8899aa'>履歴なし</p>";
             list.forEach(i => {
                 const h = document.createElement('div'); h.className = 'history-item';
                 h.innerHTML = `<div>${i.text}</div><div class="history-meta">${i.date}</div>`;
