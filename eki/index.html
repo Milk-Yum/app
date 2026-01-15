@@ -15,10 +15,8 @@
         textarea { width: 100%; height: 100px; border: 1px solid #e0e7ff; border-radius: 15px; padding: 12px; box-sizing: border-box; font-size: 16px; background: #f9fbff; -webkit-appearance: none; resize: none; }
         .btn-send { background: #5dade2; color: white; border: none; padding: 15px; border-radius: 50px; font-size: 1rem; font-weight: bold; cursor: pointer; }
         
-        /* 履歴共通スタイル */
         .history-section { width: 100%; text-align: left; margin-top: 20px; }
-        .history-title { font-size: 0.9rem; font-weight: bold; color: #667788; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .btn-reset { background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 0.7rem; text-decoration: underline; padding: 5px; }
+        .history-title { font-size: 0.9rem; font-weight: bold; color: #667788; margin-bottom: 10px; }
         .history-item { background: rgba(255, 255, 255, 0.5); padding: 12px; border-radius: 15px; margin-bottom: 10px; font-size: 0.85rem; cursor: pointer; }
         .history-meta { font-size: 0.7rem; color: #8899aa; margin-top: 4px; }
 
@@ -37,6 +35,7 @@
         .reply-input { font-size: 14px; height: 60px; border: 1px solid #eee; border-radius: 10px; padding: 8px; }
         .btn-reply-send { background: #a1c4fd; color: white; border: none; padding: 12px; border-radius: 10px; font-size: 0.9rem; font-weight: bold; cursor: pointer; }
         .btn-close { margin-top: 20px; background: #eee; border: none; padding: 10px 20px; border-radius: 20px; width: 100%; cursor: pointer; }
+        .btn-reset { background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 0.7rem; text-decoration: underline; margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -52,20 +51,16 @@
         </div>
 
         <div class="history-section">
-            <div class="history-title">
-                <span>📬 流したボトル</span>
-            </div>
+            <div class="history-title">📬 流したボトル</div>
             <div id="my-bottles-list"></div>
         </div>
 
         <div class="history-section">
-            <div class="history-title">
-                <span>📩 返信したボトル</span>
-            </div>
+            <div class="history-title">📩 返信したボトル</div>
             <div id="my-replies-list"></div>
         </div>
 
-        <button onclick="resetLocalStorage()" class="btn-reset" style="margin-top: 30px; width: 100%;">全データをリセット</button>
+        <button onclick="resetLocalStorage()" class="btn-reset">データをリセット</button>
     </div>
 
     <button id="pick-btn" class="btn-pick-up">🍾</button>
@@ -134,7 +129,6 @@
             });
         }
 
-        // 新規ボトル送信
         document.getElementById('send-btn').onclick = async () => {
             const input = document.getElementById('message-input');
             if(!input.value) return;
@@ -148,16 +142,22 @@
             } catch (e) { alert("エラー"); }
         };
 
-        // ボトルを拾う
         document.getElementById('pick-btn').onclick = async () => {
             const textDisplay = document.getElementById('picked-text');
             const senderDisplay = document.getElementById('picked-sender');
             const stationDisplay = document.getElementById('picked-station');
             const replyList = document.getElementById('reply-list');
             const overlay = document.getElementById('overlay');
+            
             document.getElementById('reply-form-area').style.display = 'block';
+            
+            // ★以前の表示をリセット
             textDisplay.innerText = `捜索中...`;
-            senderDisplay.innerText = ""; replyList.innerHTML = ""; overlay.style.display = 'flex';
+            senderDisplay.innerText = "";
+            stationDisplay.innerText = "";
+            replyList.innerHTML = ""; 
+            
+            overlay.style.display = 'flex';
 
             try {
                 const q = query(collection(db, "bottles"), where("station", "==", currentStation), where("readCount", "<", 11), limit(10));
@@ -171,42 +171,36 @@
                     textDisplay.innerText = data.text;
                     stationDisplay.innerText = `漂着地: ${data.station}`;
                     loadReplies(target.id, replyList);
-                } else { textDisplay.innerText = "ここにはまだボトルがありません。"; }
+                } else { 
+                    textDisplay.innerText = "ここにはまだボトルがありません。";
+                    replyList.innerHTML = ""; // 念のため
+                }
             } catch (e) { console.error(e); }
         };
 
-        // 返信送信
         document.getElementById('reply-send-btn').onclick = async () => {
             const input = document.getElementById('reply-input');
             if(!input.value || !currentBottleId) return;
             try {
-                const bottleSnap = await getDoc(doc(db, "bottles", currentBottleId));
-                const bottleData = bottleSnap.data();
-
+                const bSnap = await getDoc(doc(db, "bottles", currentBottleId));
                 await addDoc(collection(db, "replies"), { 
                     parentId: currentBottleId, text: input.value, senderName: myName, createdAt: serverTimestamp() 
                 });
                 await updateDoc(doc(db, "bottles", currentBottleId), { station: currentStation });
-                
-                // 返信履歴に保存
-                saveHistory('myReplyBottles', currentBottleId, bottleData.text);
-                
+                saveHistory('myReplyBottles', currentBottleId, bSnap.data().text);
                 alert("返信を流しました！");
                 document.getElementById('overlay').style.display = 'none';
                 input.value = ""; loadAllHistories();
             } catch (e) { alert("失敗"); }
         };
 
-        // 共通履歴保存関数
         function saveHistory(key, id, text) {
             let list = JSON.parse(localStorage.getItem(key) || '[]');
-            // すでに同じIDがあれば削除（重複防止）
             list = list.filter(item => item.id !== id);
             list.unshift({ id, text: text.substring(0, 20) + "...", date: new Date().toLocaleTimeString() });
             localStorage.setItem(key, JSON.stringify(list.slice(0, 10)));
         }
 
-        // 全履歴読み込み
         function loadAllHistories() {
             renderHistory('sharedMyBottles', 'my-bottles-list');
             renderHistory('myReplyBottles', 'my-replies-list');
@@ -245,6 +239,12 @@
             const replyList = document.getElementById('reply-list');
             document.getElementById('reply-form-area').style.display = 'none';
             overlay.style.display = 'flex';
+            
+            // ★詳細表示時もリセット
+            textDisplay.innerText = "読込中...";
+            senderDisplay.innerText = "";
+            replyList.innerHTML = "";
+
             const d = await getDoc(doc(db, "bottles", id));
             if (d.exists()) {
                 const data = d.data();
@@ -256,9 +256,7 @@
         }
 
         window.resetLocalStorage = () => {
-            if (confirm("名前・流した履歴・返信履歴をすべて消去しますか？")) {
-                localStorage.clear(); location.reload();
-            }
+            if (confirm("全データを削除しますか？")) { localStorage.clear(); location.reload(); }
         };
 
         document.getElementById('close-btn').onclick = () => document.getElementById('overlay').style.display = 'none';
