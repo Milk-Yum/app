@@ -11,7 +11,6 @@
         .user-profile { font-size: 0.8rem; color: #ffffff; background: rgba(0,0,0,0.1); padding: 5px 15px; border-radius: 20px; margin-bottom: 20px; display: inline-block; }
         h1 { font-size: 1.5rem; color: #ffffff; text-shadow: 1px 1px 4px rgba(0,0,0,0.1); margin-top: 0; }
         
-        /* 擬装用駅名表示 */
         .station-box { background: rgba(255, 255, 255, 0.6); padding: 15px; border-radius: 20px; margin-bottom: 20px; font-weight: bold; backdrop-filter: blur(5px); cursor: pointer; border: 2px dashed #e74c3c; color: #e74c3c; }
         .sub-text { font-size: 0.7rem; display: block; margin-top: 4px; opacity: 0.8; }
         
@@ -37,14 +36,17 @@
         .station-divider { border-top: 1px dashed #ccddee; border-bottom: 1px dashed #ccddee; padding: 8px 0; margin: 15px 0; font-size: 0.75rem; color: #8899aa; text-align: center; cursor: pointer; }
         .station-divider span { color: #e74c3c; font-weight: bold; text-decoration: underline; }
         
+        /* 返信アイテムのスタイル修正 */
         .reply-item { background: #f0f7ff; padding: 10px 12px; border-radius: 12px; font-size: 0.85rem; margin-bottom: 12px; color: #556677; display: flex; flex-direction: column; text-align: left; }
-        
+        .reply-sender { font-size: 0.7rem; color: #5dade2; font-weight: bold; margin-bottom: 4px; }
+        .reply-text { line-height: 1.4; margin-bottom: 4px; }
+        .reply-location { font-size: 0.65rem; color: #99aabb; text-align: right; font-style: italic; }
+
         .btn-reply-send { background: #a1c4fd; color: white; border: none; padding: 12px; border-radius: 10px; font-size: 0.9rem; font-weight: bold; cursor: pointer; width: 100%; }
         .btn-close { margin-top: 20px; background: #eee; border: none; padding: 10px 20px; border-radius: 20px; width: 100%; cursor: pointer; }
 
         #empty-message { display: none; padding: 40px 20px; color: #8899aa; font-size: 0.9rem; }
 
-        /* デザインされたリセットボタン */
         .debug-footer { margin-top: 40px; padding: 20px 0; }
         .btn-reset { background: rgba(231, 76, 60, 0.1); color: #e74c3c; border: 1px solid #e74c3c; padding: 8px 20px; border-radius: 20px; font-size: 0.75rem; cursor: pointer; transition: 0.2s; }
         .btn-reset:hover { background: #e74c3c; color: white; }
@@ -104,7 +106,6 @@
             </div>
 
             <div id="empty-message">ボトルが見つかりませんでした。</div>
-            
             <button id="close-btn" class="btn-close">戻る</button>
         </div>
     </div>
@@ -219,6 +220,7 @@
             });
         }
 
+        // 履歴・詳細表示時の返信スタイルを修正
         async function loadReplies(id, listElement) {
             const q = query(collection(db, "replies"), where("parentId", "==", id), orderBy("createdAt", "asc"));
             const snap = await getDocs(q);
@@ -226,7 +228,11 @@
             snap.forEach(r => {
                 const rd = r.data();
                 const d = document.createElement('div'); d.className = 'reply-item';
-                d.innerHTML = `<b>${rd.senderName}</b><br>${rd.text}<br><small style="color:#99aabb; font-style:italic;">${rd.station} にて</small>`;
+                d.innerHTML = `
+                    <span class="reply-sender">${rd.senderName}</span>
+                    <span class="reply-text">${rd.text}</span>
+                    <span class="reply-location">${rd.station} にて</span>
+                `;
                 listElement.appendChild(d);
             });
         }
