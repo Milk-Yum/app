@@ -112,7 +112,7 @@
         window.resetNickname = () => { localStorage.setItem('ekiUserNickname', generateName()); location.reload(); };
         window.resetAll = () => { if(confirm("全ての履歴と名前が消去されます。よろしいですか？")) { localStorage.clear(); location.reload(); } };
         window.openSettings = () => document.getElementById('settings-overlay').style.display = 'flex';
-        window.closeModals = () => { document.querySelectorAll('.overlay').forEach(el => el.style.display = 'none'); };
+        window.closeModals = () => document.querySelectorAll('.overlay').forEach(el => el.style.display = 'none');
 
         async function getStation() {
             return new Promise((resolve) => {
@@ -134,7 +134,15 @@
         document.getElementById('send-btn').onclick = async () => {
             const input = document.getElementById('message-input');
             if(!input.value) return;
-            const docRef = await addDoc(collection(db, "bottles"), { text: input.value, station: currentStation, senderName: myName, createdAt: serverTimestamp(), readCount: 0 });
+            // originStationを記録
+            const docRef = await addDoc(collection(db, "bottles"), { 
+                text: input.value, 
+                station: currentStation, 
+                originStation: currentStation, 
+                senderName: myName, 
+                createdAt: serverTimestamp(), 
+                readCount: 0 
+            });
             saveHistory('sharedMyBottles', docRef.id, input.value);
             alert("海に流しました！"); input.value = ""; loadAllHistories();
         };
@@ -151,21 +159,24 @@
                 currentBottleId = target.id;
                 const data = target.data();
                 await updateDoc(doc(db, "bottles", target.id), { readCount: increment(1) });
+                
+                // 元の駅を表示
                 document.getElementById('picked-sender').innerText = data.senderName;
                 document.getElementById('picked-text').innerText = data.text;
-                document.getElementById('picked-station').innerText = data.station + ' にて';
+                document.getElementById('picked-station').innerText = (data.originStation || data.station) + ' にて';
+                
                 content.style.display = 'block';
                 document.getElementById('reply-form-area').style.display = 'flex';
                 loadReplies(target.id, document.getElementById('reply-list'));
             } else { empty.style.display = 'block'; }
         };
 
-        // 返信共通アクション
         async function sendReply() {
             const input = document.getElementById('reply-input');
             if(!input.value || !currentBottleId) return;
             const bSnap = await getDoc(doc(db, "bottles", currentBottleId));
             await addDoc(collection(db, "replies"), { parentId: currentBottleId, text: input.value, senderName: myName, station: currentStation, createdAt: serverTimestamp() });
+            // originStationは絶対に変更せず、検索用のstation（現在地）のみ更新
             await updateDoc(doc(db, "bottles", currentBottleId), { station: currentStation });
             saveHistory('myReplyBottles', currentBottleId, bSnap.data().text);
             alert(`${currentStation} から返信を流しました！`); closeModals();
@@ -220,7 +231,7 @@
                 const data = d.data();
                 document.getElementById('picked-sender').innerText = data.senderName;
                 document.getElementById('picked-text').innerText = data.text;
-                document.getElementById('picked-station').innerText = data.station + ' にて';
+                document.getElementById('picked-station').innerText = (data.originStation || data.station) + ' にて';
                 loadReplies(id, document.getElementById('reply-list'));
             }
         }
