@@ -28,11 +28,10 @@
         #picked-station { font-size: 0.7rem; color: #8899aa; margin-bottom: 10px; text-align: left; }
         #picked-text { font-size: 1.1rem; line-height: 1.5; margin-bottom: 20px; word-wrap: break-word; text-align: left; border-left: 3px solid #a1c4fd; padding-left: 10px; }
         
-        /* 返信アイテムの新しいスタイル */
         .reply-section { border-top: 1px dashed #eee; padding-top: 15px; margin-top: 15px; text-align: left; }
         .reply-item { background: #f0f7ff; padding: 10px 12px; border-radius: 12px; font-size: 0.85rem; margin-bottom: 12px; color: #556677; display: flex; flex-direction: column; }
-        .reply-sender { font-size: 0.7rem; color: #5dade2; font-weight: bold; margin-bottom: 4px; }
-        .reply-text { margin-bottom: 4px; line-height: 1.4; }
+        .reply-sender { font-size: 0.7rem; color: #5dade2; font-weight: bold; margin-bottom: 4px; text-align: left; }
+        .reply-text { margin-bottom: 4px; line-height: 1.4; text-align: left; }
         .reply-location { font-size: 0.65rem; color: #99aabb; text-align: right; font-style: italic; }
 
         .reply-input-area { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
@@ -75,7 +74,7 @@
             <div id="picked-station"></div>
             <p id="picked-text"></p>
             <div class="reply-section">
-                <div style="font-size: 0.8rem; margin-bottom: 10px; text-align: left; color: #8899aa;">投函先: <span id="current-station-name" style="color: #334d66; font-weight: bold;">取得中...</span></div>
+                <div style="font-size: 0.75rem; margin-bottom: 10px; text-align: left; color: #8899aa;">現在の位置: <span id="current-station-name" style="color: #334d66; font-weight: bold;">取得中...</span></div>
                 <div id="reply-list"></div>
                 <div class="reply-input-area" id="reply-form-area">
                     <textarea id="reply-input" class="reply-input" placeholder="返信を書く..."></textarea>
@@ -187,7 +186,7 @@
                     parentId: currentBottleId, 
                     text: input.value, 
                     senderName: myName, 
-                    station: currentStation, // ★ここ：返信した駅も保存
+                    station: currentStation,
                     createdAt: serverTimestamp() 
                 });
                 await updateDoc(doc(db, "bottles", currentBottleId), { station: currentStation });
@@ -244,12 +243,14 @@
             const overlay = document.getElementById('overlay');
             const textDisplay = document.getElementById('picked-text');
             const senderDisplay = document.getElementById('picked-sender');
+            const stationDisplay = document.getElementById('picked-station');
             const replyList = document.getElementById('reply-list');
             document.getElementById('reply-form-area').style.display = 'none';
             overlay.style.display = 'flex';
             
             textDisplay.innerText = "読込中...";
             senderDisplay.innerText = "";
+            stationDisplay.innerText = "";
             replyList.innerHTML = "";
 
             const d = await getDoc(doc(db, "bottles", id));
@@ -257,7 +258,7 @@
                 const data = d.data();
                 senderDisplay.innerText = data.senderName || "無名の旅人さん";
                 textDisplay.innerText = data.text;
-                document.getElementById('picked-station').innerText = `現在地: ${data.station}`;
+                stationDisplay.innerText = `現在地: ${data.station}`;
                 loadReplies(id, replyList);
             }
         }
