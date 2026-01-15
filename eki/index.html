@@ -8,28 +8,48 @@
     <style>
         body { margin: 0; padding: 0; font-family: sans-serif; background: linear-gradient(180deg, #a1c4fd 0%, #c2e9fb 100%); min-height: 100vh; display: flex; flex-direction: column; align-items: center; color: #334d66; padding-bottom: 100px; }
         .container { width: 90%; max-width: 400px; margin-top: 20px; text-align: center; }
-        .user-profile { font-size: 0.8rem; color: #ffffff; background: rgba(0,0,0,0.1); padding: 5px 15px; border-radius: 20px; margin-bottom: 20px; display: inline-block; }
+        
+        /* ユーザープロファイルと歯車アイコン */
+        .user-profile-wrapper { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 20px; }
+        .user-profile { font-size: 0.8rem; color: #ffffff; background: rgba(0,0,0,0.1); padding: 5px 15px; border-radius: 20px; display: inline-block; }
+        .settings-icon { cursor: pointer; font-size: 1.2rem; color: rgba(255,255,255,0.8); transition: transform 0.3s; }
+        .settings-icon:hover { transform: rotate(45deg); }
+
         h1 { font-size: 1.5rem; color: #ffffff; text-shadow: 1px 1px 4px rgba(0,0,0,0.1); margin-top: 0; }
         .station-box { background: rgba(255, 255, 255, 0.6); padding: 15px; border-radius: 20px; margin-bottom: 20px; font-weight: bold; backdrop-filter: blur(5px); min-height: 20px; }
+        
         .bottle-card { background: #ffffff; padding: 25px; border-radius: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; }
         textarea { width: 100%; height: 100px; border: 1px solid #e0e7ff; border-radius: 15px; padding: 12px; box-sizing: border-box; font-size: 16px; background: #f9fbff; -webkit-appearance: none; resize: none; }
         .btn-send { background: #5dade2; color: white; border: none; padding: 15px; border-radius: 50px; font-size: 1rem; font-weight: bold; cursor: pointer; }
+        
         .history-section { width: 100%; text-align: left; margin-top: 20px; }
         .history-title { font-size: 0.9rem; font-weight: bold; color: #667788; margin-bottom: 10px; }
         .history-item { background: rgba(255, 255, 255, 0.5); padding: 12px; border-radius: 15px; margin-bottom: 10px; font-size: 0.85rem; cursor: pointer; }
         .history-meta { font-size: 0.7rem; color: #8899aa; margin-top: 4px; }
+        
         .btn-pick-up { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: white; border: none; border-radius: 50%; width: 70px; height: 70px; font-size: 40px; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 15px rgba(0,0,0,0.2); cursor: pointer; z-index: 10; }
-        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 100; }
+        
+        /* 共通モーダルスタイル */
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 100; }
         .modal { background: white; padding: 20px; border-radius: 20px; width: 85%; text-align: center; max-width: 350px; max-height: 85vh; overflow-y: auto; }
+        
+        /* 設定メニュー用 */
+        .settings-menu { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+        .btn-action { padding: 12px; border-radius: 15px; border: 1px solid #eee; background: #f9f9f9; cursor: pointer; font-size: 0.9rem; font-weight: bold; color: #555; }
+        .btn-action.danger { color: #e74c3c; border-color: #ffdada; background: #fff5f5; }
+
+        /* ボトル・返信スタイル */
         .main-message-box { background: #f0f7ff; padding: 15px; border-radius: 15px; margin-bottom: 5px; text-align: left; }
         #picked-sender { font-size: 0.75rem; color: #5dade2; font-weight: bold; margin-bottom: 5px; }
         #picked-text { font-size: 1.1rem; line-height: 1.5; margin-bottom: 8px; word-wrap: break-word; }
         #picked-station { font-size: 0.65rem; color: #99aabb; text-align: right; font-style: italic; }
         .station-divider { border-top: 1px dashed #ccddee; border-bottom: 1px dashed #ccddee; padding: 8px 0; margin: 15px 0; font-size: 0.75rem; color: #8899aa; text-align: center; }
         .station-divider span { color: #334d66; font-weight: bold; }
+        
         .reply-item { background: #f0f7ff; padding: 10px 12px; border-radius: 12px; font-size: 0.85rem; margin-bottom: 12px; color: #556677; display: flex; flex-direction: column; text-align: left; }
         .reply-sender { font-size: 0.7rem; color: #5dade2; font-weight: bold; margin-bottom: 4px; }
         .reply-location { font-size: 0.65rem; color: #99aabb; text-align: right; font-style: italic; }
+        
         .reply-input-area { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
         .reply-input { font-size: 14px; height: 60px; border: 1px solid #eee; border-radius: 10px; padding: 8px; resize: none; }
         .btn-reply-send { background: #a1c4fd; color: white; border: none; padding: 12px; border-radius: 10px; font-size: 0.9rem; font-weight: bold; cursor: pointer; }
@@ -39,18 +59,25 @@
 </head>
 <body>
     <div class="container">
-        <div class="user-profile">あなたは <span id="my-name-display">...</span> です</div>
+        <div class="user-profile-wrapper">
+            <div class="user-profile">あなたは <span id="my-name-display">...</span> です</div>
+            <div class="settings-icon" onclick="openSettings()">⚙️</div>
+        </div>
         <h1>Eki Bottle Mail</h1>
         <div id="station-display" class="station-box"><span>潮の流れを確認中...</span></div>
+        
         <div class="bottle-card">
             <textarea id="message-input" placeholder="今の駅にメッセージを置く..."></textarea>
             <button id="send-btn" class="btn-send">この駅に流す</button>
         </div>
+        
         <div class="history-section"><div class="history-title">📬 流したボトル</div><div id="my-bottles-list"></div></div>
         <div class="history-section"><div class="history-title">📩 返信したボトル</div><div id="my-replies-list"></div></div>
     </div>
+
     <button id="pick-btn" class="btn-pick-up">🍾</button>
-    <div id="overlay">
+
+    <div id="bottle-overlay" class="overlay">
         <div class="modal">
             <div id="bottle-content">
                 <div class="main-message-box">
@@ -66,7 +93,18 @@
                 </div>
             </div>
             <div id="empty-message">ボトルが見つかりませんでした。</div>
-            <button id="close-btn" class="btn-close">戻る</button>
+            <button onclick="closeModals()" class="btn-close">戻る</button>
+        </div>
+    </div>
+
+    <div id="settings-overlay" class="overlay">
+        <div class="modal">
+            <h2 style="font-size: 1.1rem; margin-top:0;">設定</h2>
+            <div class="settings-menu">
+                <button class="btn-action" onclick="resetNickname()">名前だけ変更する</button>
+                <button class="btn-action danger" onclick="resetAll()">全データ（履歴含む）をリセット</button>
+            </div>
+            <button onclick="closeModals()" class="btn-close">キャンセル</button>
         </div>
     </div>
 
@@ -79,17 +117,39 @@
         const db = getFirestore(app);
         let currentStation = "どこかの駅", currentBottleId = null, myName = "";
 
+        // 名前生成と初期化
+        function generateName() {
+            const colors = ["茜色","瑠璃色","琥珀色","薄桜色","翡翠色","浅葱色","萌葱色","山吹色","藤色","銀鼠色","漆黒","純白","群青色","若草色","藍色","向日葵色","菫色","珊瑚色","黄金色","空色"];
+            const jobs = ["旅人","かもめ","漂流者","駅員","灯台守","月明かり","風来坊","詩人","迷い子","案内人","観測者","夢想家","開拓者","守護者","訪問者","記録係","職人","賢者","踊り子","奏者"];
+            return colors[Math.floor(Math.random()*20)] + "の" + jobs[Math.floor(Math.random()*20)] + "さん";
+        }
+
         function initMyName() {
             const saved = localStorage.getItem('ekiUserNickname');
-            if (saved) { myName = saved; } else {
-                const colors = ["茜色","瑠璃色","琥珀色","薄桜色","翡翠色","浅葱色","萌葱色","山吹色","藤色","銀鼠色","漆黒","純白","群青色","若草色","藍色","向日葵色","菫色","珊瑚色","黄金色","空色"];
-                const jobs = ["旅人","かもめ","漂流者","駅員","灯台守","月明かり","風来坊","詩人","迷い子","案内人","観測者","夢想家","開拓者","守護者","訪問者","記録係","職人","賢者","踊り子","奏者"];
-                myName = colors[Math.floor(Math.random()*20)] + "の" + jobs[Math.floor(Math.random()*20)] + "さん";
-                localStorage.setItem('ekiUserNickname', myName);
-            }
+            myName = saved || generateName();
+            if (!saved) localStorage.setItem('ekiUserNickname', myName);
             document.getElementById('my-name-display').innerText = myName;
         }
 
+        // リセット機能
+        window.resetNickname = () => {
+            localStorage.setItem('ekiUserNickname', generateName());
+            location.reload();
+        };
+        window.resetAll = () => {
+            if(confirm("全ての履歴と名前が消去されます。よろしいですか？")) {
+                localStorage.clear();
+                location.reload();
+            }
+        };
+
+        // モーダル制御
+        window.openSettings = () => document.getElementById('settings-overlay').style.display = 'flex';
+        window.closeModals = () => {
+            document.querySelectorAll('.overlay').forEach(el => el.style.display = 'none');
+        };
+
+        // GPS取得
         async function getStation() {
             navigator.geolocation.getCurrentPosition(async (pos) => {
                 const url = `https://express.heartrails.com/api/json?method=getStations&x=${pos.coords.longitude}&y=${pos.coords.latitude}`;
@@ -113,9 +173,10 @@
         };
 
         document.getElementById('pick-btn').onclick = async () => {
-            document.getElementById('bottle-content').style.display = 'none';
-            document.getElementById('empty-message').style.display = 'none';
-            document.getElementById('overlay').style.display = 'flex';
+            const overlay = document.getElementById('bottle-overlay');
+            const content = document.getElementById('bottle-content');
+            const empty = document.getElementById('empty-message');
+            content.style.display = 'none'; empty.style.display = 'none'; overlay.style.display = 'flex';
             
             const q = query(collection(db, "bottles"), where("station", "==", currentStation), where("readCount", "<", 11), limit(10));
             const snap = await getDocs(q);
@@ -127,12 +188,10 @@
                 document.getElementById('picked-sender').innerText = data.senderName;
                 document.getElementById('picked-text').innerText = data.text;
                 document.getElementById('picked-station').innerText = data.station + ' にて';
-                document.getElementById('bottle-content').style.display = 'block';
+                content.style.display = 'block';
                 document.getElementById('reply-form-area').style.display = 'flex';
                 loadReplies(target.id, document.getElementById('reply-list'));
-            } else {
-                document.getElementById('empty-message').style.display = 'block';
-            }
+            } else { empty.style.display = 'block'; }
         };
 
         document.getElementById('reply-send-btn').onclick = async () => {
@@ -142,7 +201,7 @@
             await addDoc(collection(db, "replies"), { parentId: currentBottleId, text: input.value, senderName: myName, station: currentStation, createdAt: serverTimestamp() });
             await updateDoc(doc(db, "bottles", currentBottleId), { station: currentStation });
             saveHistory('myReplyBottles', currentBottleId, bSnap.data().text);
-            alert("返信を流しました！"); document.getElementById('overlay').style.display = 'none';
+            alert("返信を流しました！"); closeModals();
             input.value = ""; loadAllHistories();
         };
 
@@ -173,16 +232,17 @@
             snap.forEach(r => {
                 const rd = r.data();
                 const d = document.createElement('div'); d.className = 'reply-item';
-                d.innerHTML = `<span class="reply-sender">${rd.senderName}</span><span>${rd.text}</span><span class="reply-location">${rd.station} にて</span>`;
+                d.innerHTML = `<span class="reply-sender">${rd.senderName}</span><span class="reply-text">${rd.text}</span><span class="reply-location">${rd.station} にて</span>`;
                 listElement.appendChild(d);
             });
         }
 
         async function showSpecificBottle(id) {
+            const overlay = document.getElementById('bottle-overlay');
             document.getElementById('bottle-content').style.display = 'block';
             document.getElementById('empty-message').style.display = 'none';
             document.getElementById('reply-form-area').style.display = 'none';
-            document.getElementById('overlay').style.display = 'flex';
+            overlay.style.display = 'flex';
             const d = await getDoc(doc(db, "bottles", id));
             if (d.exists()) {
                 const data = d.data();
@@ -193,7 +253,6 @@
             }
         }
 
-        document.getElementById('close-btn').onclick = () => document.getElementById('overlay').style.display = 'none';
         window.onload = () => { initMyName(); getStation(); loadAllHistories(); };
     </script>
 </body>
