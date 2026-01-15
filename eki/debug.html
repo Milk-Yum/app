@@ -3,23 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eki Bottle Mail (Debug Full)</title>
+    <title>Eki Bottle Mail (Debug)</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍾</text></svg>">
     <style>
         body { margin: 0; padding: 0; font-family: sans-serif; background: linear-gradient(180deg, #a1c4fd 0%, #c2e9fb 100%); min-height: 100vh; display: flex; flex-direction: column; align-items: center; color: #334d66; padding-bottom: 100px; }
-        .container { width: 90%; max-width: 400px; margin-top: 40px; text-align: center; }
-        h1 { font-size: 1.5rem; color: #ffffff; text-shadow: 1px 1px 4px rgba(0,0,0,0.1); }
+        .container { width: 90%; max-width: 400px; margin-top: 20px; text-align: center; }
         
-        /* 駅名表示スタイル（デバッグ用） */
-        .station-box { background: rgba(255, 255, 255, 0.6); padding: 15px; border-radius: 20px; margin-bottom: 20px; font-weight: bold; backdrop-filter: blur(5px); cursor: pointer; border: 2px dashed #5dade2; }
-        .station-box.debug-on { border: 2px solid #e74c3c; color: #e74c3c; }
-        .sub-text { font-size: 0.7rem; color: #5dade2; display: block; margin-top: 4px; }
+        .user-profile { font-size: 0.8rem; color: #ffffff; background: rgba(0,0,0,0.1); padding: 5px 15px; border-radius: 20px; margin-bottom: 20px; display: inline-block; }
+        
+        h1 { font-size: 1.5rem; color: #ffffff; text-shadow: 1px 1px 4px rgba(0,0,0,0.1); margin-top: 0; }
+        
+        /* 駅名表示（デバッグ用） */
+        .station-box { background: rgba(255, 255, 255, 0.6); padding: 15px; border-radius: 20px; margin-bottom: 20px; font-weight: bold; backdrop-filter: blur(5px); cursor: pointer; border: 2px dashed #e74c3c; color: #e74c3c; }
+        .sub-text { font-size: 0.7rem; display: block; margin-top: 4px; opacity: 0.8; }
 
         .bottle-card { background: #ffffff; padding: 25px; border-radius: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 15px; margin-bottom: 40px; }
         textarea { width: 100%; height: 100px; border: 1px solid #e0e7ff; border-radius: 15px; padding: 12px; box-sizing: border-box; font-size: 16px; background: #f9fbff; -webkit-appearance: none; resize: none; }
         .btn-send { background: #5dade2; color: white; border: none; padding: 15px; border-radius: 50px; font-size: 1rem; font-weight: bold; cursor: pointer; }
         
-        /* 履歴セクション */
         .my-bottles-section { width: 100%; text-align: left; }
         .my-bottles-title { font-size: 0.9rem; font-weight: bold; color: #667788; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         .btn-reset { background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 0.7rem; text-decoration: underline; padding: 5px; }
@@ -30,13 +31,15 @@
         
         #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 100; }
         .modal { background: white; padding: 20px; border-radius: 20px; width: 85%; text-align: center; max-width: 350px; max-height: 85vh; overflow-y: auto; }
-        #picked-station { font-size: 0.8rem; color: #8899aa; margin-bottom: 10px; }
+        #picked-sender { font-size: 0.75rem; color: #5dade2; font-weight: bold; margin-bottom: 5px; }
+        #picked-station { font-size: 0.7rem; color: #8899aa; margin-bottom: 10px; }
         #picked-text { font-size: 1.1rem; line-height: 1.5; margin-bottom: 20px; word-wrap: break-word; }
         
-        .modal-station-trigger { background: #f0f4f8; padding: 10px; border-radius: 10px; margin-bottom: 15px; font-size: 0.8rem; border: 1px dashed #5dade2; cursor: pointer; }
+        .modal-station-trigger { background: #f0f4f8; padding: 10px; border-radius: 10px; margin-bottom: 15px; font-size: 0.8rem; border: 1px dashed #e74c3c; cursor: pointer; color: #e74c3c; }
 
         .reply-section { border-top: 1px dashed #eee; padding-top: 15px; margin-top: 15px; text-align: left; }
-        .reply-item { background: #f0f7ff; padding: 8px 12px; border-radius: 10px; font-size: 0.9rem; margin-bottom: 8px; color: #556677; }
+        .reply-item { background: #f0f7ff; padding: 8px 12px; border-radius: 10px; font-size: 0.85rem; margin-bottom: 8px; color: #556677; }
+        .reply-sender { font-size: 0.65rem; color: #a1c4fd; display: block; margin-bottom: 2px; font-weight: bold; }
         .reply-input-area { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
         .reply-input { font-size: 14px; height: 60px; border: 1px solid #eee; border-radius: 10px; padding: 8px; }
         .btn-reply-send { background: #a1c4fd; color: white; border: none; padding: 12px; border-radius: 10px; font-size: 0.9rem; font-weight: bold; cursor: pointer; }
@@ -46,10 +49,11 @@
 <body>
 
     <div class="container">
+        <div class="user-profile">あなたは <span id="my-name-display">...</span> です</div>
         <h1>Eki Bottle Mail (Debug)</h1>
         <div id="station-display" class="station-box" onclick="debugChangeStation()">
-            <span>タップして駅を選択してください</span>
-            <span class="sub-text">(デバッグ用駅擬装)</span>
+            <span id="main-station-name">駅を選択してください</span>
+            <span class="sub-text">(タップで位置を擬装)</span>
         </div>
         
         <div class="bottle-card">
@@ -60,7 +64,7 @@
         <div class="my-bottles-section">
             <div class="my-bottles-title">
                 <span>📬 自分のボトル履歴</span>
-                <button onclick="resetLocalStorage()" class="btn-reset">履歴リセット</button>
+                <button onclick="resetLocalStorage()" class="btn-reset">全リセット</button>
             </div>
             <div id="my-bottles-list"></div>
         </div>
@@ -70,11 +74,12 @@
 
     <div id="overlay">
         <div class="modal">
+            <div id="picked-sender"></div>
             <div id="picked-station"></div>
             <p id="picked-text"></p>
             <div class="reply-section">
-                <div class="modal-station-trigger" id="modal-station-display" onclick="debugChangeStation()">
-                    投函先: <span id="current-station-name">未設定</span> (変更)
+                <div class="modal-station-trigger" onclick="debugChangeStation()">
+                    投函先: <span id="current-station-name">未設定</span> (タップで変更)
                 </div>
                 <div id="reply-list"></div>
                 <div class="reply-input-area" id="reply-form-area">
@@ -104,22 +109,32 @@
 
         let currentStation = "どこかの駅";
         let currentBottleId = null;
-        let isDebugMode = true; // デバッグ版は常にオン
+        let myName = "";
 
-        function updateAllStationDisplays() {
-            const mainDisplay = document.querySelector('#station-display span');
-            const modalDisplay = document.getElementById('current-station-name');
-            const mainBox = document.getElementById('station-display');
-
-            const text = "【擬装中】" + currentStation;
-            mainDisplay.innerText = text;
-            if (modalDisplay) modalDisplay.innerText = text;
-            mainBox.classList.add('debug-on');
+        // 1. 名前生成＆固定
+        function initMyName() {
+            const savedName = localStorage.getItem('ekiUserNickname');
+            if (savedName) {
+                myName = savedName;
+            } else {
+                const colors = ["茜色", "瑠璃色", "琥珀色", "浅葱色", "薄桜色", "翡翠色", "山吹色", "墨色", "露草色", "藤色", "勿忘草色", "向日葵色", "群青色", "千歳緑", "珊瑚色", "萌黄", "葡萄色", "空色", "真珠色", "宵闇色"];
+                const suffixes = ["旅人", "かもめ", "漂流者", "乗客", "潮風", "迷い子", "贈り主", "途中下車", "駅員", "案内人", "砂時計", "月明かり", "星屑", "くじら", "ぺんぎん", "灯台守", "渡し守", "切符切り", "夜汽車", "波音"];
+                myName = colors[Math.floor(Math.random()*colors.length)] + "の" + suffixes[Math.floor(Math.random()*suffixes.length)] + "さん";
+                localStorage.setItem('ekiUserNickname', myName);
+            }
+            document.getElementById('my-name-display').innerText = myName;
         }
 
+        // 2. 駅名表示を更新
+        function updateUI() {
+            document.getElementById('main-station-name').innerText = "【擬装中】" + currentStation;
+            document.getElementById('current-station-name').innerText = currentStation;
+        }
+
+        // 3. 位置擬装
         window.debugChangeStation = () => {
             const stations = ["JR山手線 新宿駅", "JR山手線 渋谷駅", "JR山手線 東京駅", "東急東横線 横浜駅", "阪急神戸本線 大阪梅田駅"];
-            const choice = prompt("駅を選んでください：\n1:新宿 2:渋谷 3:東京 4:横浜 5:梅田\n(直接入力もOK)");
+            const choice = prompt("擬装する駅を選んでください：\n1:新宿 2:渋谷 3:東京 4:横浜 5:梅田\n(直接入力もOK)");
             
             if (choice === "1") currentStation = stations[0];
             else if (choice === "2") currentStation = stations[1];
@@ -128,26 +143,44 @@
             else if (choice === "5") currentStation = stations[4];
             else if (choice) currentStation = choice;
 
-            if (choice) updateAllStationDisplays();
+            if (choice) updateUI();
         };
 
+        // 4. 流す
         document.getElementById('send-btn').onclick = async () => {
             const input = document.getElementById('message-input');
             if(!input.value) return;
             try {
-                const docRef = await addDoc(collection(db, "bottles"), { text: input.value, station: currentStation, createdAt: serverTimestamp(), readCount: 0 });
+                const docRef = await addDoc(collection(db, "bottles"), {
+                    text: input.value,
+                    station: currentStation,
+                    senderName: myName,
+                    createdAt: serverTimestamp(),
+                    readCount: 0 
+                });
                 saveMyBottle(docRef.id, input.value);
                 alert(`${currentStation}に流しました！`);
-                input.value = ""; loadMyBottles();
+                input.value = "";
+                loadMyBottles();
             } catch (e) { alert("送信エラー"); }
         };
 
+        // 5. 拾う
         document.getElementById('pick-btn').onclick = async () => {
-            const overlay = document.getElementById('overlay');
+            if(currentStation === "どこかの駅") return alert("先に駅を選択してください");
+            
+            const textDisplay = document.getElementById('picked-text');
+            const senderDisplay = document.getElementById('picked-sender');
+            const stationDisplay = document.getElementById('picked-station');
             const replyList = document.getElementById('reply-list');
+            const overlay = document.getElementById('overlay');
             document.getElementById('reply-form-area').style.display = 'block';
-            overlay.style.display = 'flex'; updateAllStationDisplays();
+            
+            textDisplay.innerText = `${currentStation}を捜索中...`;
+            senderDisplay.innerText = "";
             replyList.innerHTML = "";
+            overlay.style.display = 'flex';
+            updateUI();
 
             try {
                 const q = query(collection(db, "bottles"), where("station", "==", currentStation), where("readCount", "<", 11), limit(10));
@@ -157,22 +190,40 @@
                     currentBottleId = target.id;
                     const data = target.data();
                     await updateDoc(doc(db, "bottles", target.id), { readCount: increment(1) });
-                    document.getElementById('picked-text').innerText = data.text;
-                    document.getElementById('picked-station').innerText = `漂着地: ${data.station} (${(data.readCount||0)+1}回目)`;
+
+                    senderDisplay.innerText = data.senderName || "無名の旅人さん";
+                    textDisplay.innerText = data.text;
+                    stationDisplay.innerText = `漂着地: ${data.station} (${(data.readCount||0)+1}回目)`;
+                    
                     const qR = query(collection(db, "replies"), where("parentId", "==", target.id), orderBy("createdAt", "asc"));
                     const rSnap = await getDocs(qR);
-                    rSnap.forEach(r => { const d = document.createElement('div'); d.className='reply-item'; d.innerText=r.data().text; replyList.appendChild(d); });
-                } else { document.getElementById('picked-text').innerText = "ここにはボトルがありません。"; }
+                    rSnap.forEach(r => {
+                        const rd = r.data();
+                        const div = document.createElement('div');
+                        div.className = 'reply-item';
+                        div.innerHTML = `<span class="reply-sender">${rd.senderName || "旅人さん"}</span>${rd.text}`;
+                        replyList.appendChild(div);
+                    });
+                } else {
+                    textDisplay.innerText = "ここにはまだボトルがありません。";
+                }
             } catch (e) { console.error(e); }
         };
 
+        // 6. 返信
         document.getElementById('reply-send-btn').onclick = async () => {
             const input = document.getElementById('reply-input');
             if(!input.value || !currentBottleId) return;
             try {
-                await addDoc(collection(db, "replies"), { parentId: currentBottleId, text: input.value, createdAt: serverTimestamp() });
+                await addDoc(collection(db, "replies"), { 
+                    parentId: currentBottleId, 
+                    text: input.value, 
+                    senderName: myName,
+                    createdAt: serverTimestamp() 
+                });
                 await updateDoc(doc(db, "bottles", currentBottleId), { station: currentStation });
-                alert("返信完了！"); document.getElementById('overlay').style.display = 'none';
+                alert(`${currentStation}に返信を流しました！`);
+                document.getElementById('overlay').style.display = 'none';
                 input.value = "";
             } catch (e) { alert("失敗"); }
         };
@@ -197,32 +248,40 @@
         }
 
         window.resetLocalStorage = () => {
-            if (confirm("全履歴（共有）をリセットしますか？")) {
-                localStorage.removeItem('sharedMyBottles');
-                localStorage.removeItem('myBottles');
-                loadMyBottles();
+            if (confirm("名前も履歴もリセットして最初から始めますか？")) {
+                localStorage.clear();
+                location.reload();
             }
         };
 
         async function showSpecificBottle(id) {
             const overlay = document.getElementById('overlay');
+            const textDisplay = document.getElementById('picked-text');
+            const senderDisplay = document.getElementById('picked-sender');
             const replyList = document.getElementById('reply-list');
             document.getElementById('reply-form-area').style.display = 'none';
             overlay.style.display = 'flex';
+            replyList.innerHTML = "";
             const d = await getDoc(doc(db, "bottles", id));
             if (d.exists()) {
                 const data = d.data();
-                document.getElementById('picked-text').innerText = data.text;
+                senderDisplay.innerText = data.senderName || "無名の旅人さん";
+                textDisplay.innerText = data.text;
                 document.getElementById('picked-station').innerText = `現在地: ${data.station}`;
-                replyList.innerHTML = "";
                 const qR = query(collection(db, "replies"), where("parentId", "==", id), orderBy("createdAt", "asc"));
                 const rSnap = await getDocs(qR);
-                rSnap.forEach(r => { const rd = document.createElement('div'); rd.className='reply-item'; rd.innerText=r.data().text; replyList.appendChild(rd); });
+                rSnap.forEach(r => {
+                    const rd = r.data();
+                    const div = document.createElement('div');
+                    div.className = 'reply-item';
+                    div.innerHTML = `<span class="reply-sender">${rd.senderName || "旅人さん"}</span>${rd.text}`;
+                    replyList.appendChild(div);
+                });
             }
         }
 
         document.getElementById('close-btn').onclick = () => document.getElementById('overlay').style.display = 'none';
-        window.onload = () => { updateAllStationDisplays(); loadMyBottles(); };
+        window.onload = () => { initMyName(); loadMyBottles(); };
     </script>
 </body>
 </html>
