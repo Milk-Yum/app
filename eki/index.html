@@ -24,21 +24,27 @@
         
         #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 100; }
         .modal { background: white; padding: 20px; border-radius: 20px; width: 85%; text-align: center; max-width: 350px; max-height: 85vh; overflow-y: auto; }
-        #picked-sender { font-size: 0.75rem; color: #5dade2; font-weight: bold; margin-bottom: 5px; text-align: left; }
-        #picked-station { font-size: 0.7rem; color: #8899aa; margin-bottom: 10px; text-align: left; }
-        #picked-text { font-size: 1.1rem; line-height: 1.5; margin-bottom: 20px; word-wrap: break-word; text-align: left; border-left: 3px solid #a1c4fd; padding-left: 10px; }
         
-        .reply-section { border-top: 1px dashed #eee; padding-top: 15px; margin-top: 15px; text-align: left; }
+        /* メッセージ表示エリア（親メッセージ） */
+        #picked-sender { font-size: 0.75rem; color: #5dade2; font-weight: bold; margin-bottom: 5px; text-align: left; }
+        #picked-text { font-size: 1.1rem; line-height: 1.5; margin-bottom: 5px; word-wrap: break-word; text-align: left; border-left: 3px solid #a1c4fd; padding-left: 10px; }
+        #picked-station { font-size: 0.65rem; color: #99aabb; text-align: right; font-style: italic; margin-bottom: 15px; }
+
+        /* 現在の位置（中央・点線） */
+        .station-divider { border-top: 1px dashed #ccddee; border-bottom: 1px dashed #ccddee; padding: 8px 0; margin: 15px 0; font-size: 0.75rem; color: #8899aa; text-align: center; }
+        .station-divider span { color: #334d66; font-weight: bold; }
+        
+        /* 返信アイテムのスタイル */
+        .reply-section { text-align: left; }
         .reply-item { background: #f0f7ff; padding: 10px 12px; border-radius: 12px; font-size: 0.85rem; margin-bottom: 12px; color: #556677; display: flex; flex-direction: column; }
         .reply-sender { font-size: 0.7rem; color: #5dade2; font-weight: bold; margin-bottom: 4px; text-align: left; }
         .reply-text { margin-bottom: 4px; line-height: 1.4; text-align: left; }
         .reply-location { font-size: 0.65rem; color: #99aabb; text-align: right; font-style: italic; }
 
         .reply-input-area { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
-        .reply-input { font-size: 14px; height: 60px; border: 1px solid #eee; border-radius: 10px; padding: 8px; }
+        .reply-input { font-size: 14px; height: 60px; border: 1px solid #eee; border-radius: 10px; padding: 8px; resize: none; }
         .btn-reply-send { background: #a1c4fd; color: white; border: none; padding: 12px; border-radius: 10px; font-size: 0.9rem; font-weight: bold; cursor: pointer; }
         .btn-close { margin-top: 20px; background: #eee; border: none; padding: 10px 20px; border-radius: 20px; width: 100%; cursor: pointer; }
-        .btn-reset { background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 0.7rem; text-decoration: underline; margin-top: 20px; }
     </style>
 </head>
 <body>
@@ -62,8 +68,6 @@
             <div class="history-title">📩 返信したボトル</div>
             <div id="my-replies-list"></div>
         </div>
-
-        <button onclick="resetLocalStorage()" class="btn-reset">データをリセット</button>
     </div>
 
     <button id="pick-btn" class="btn-pick-up">🍾</button>
@@ -71,10 +75,14 @@
     <div id="overlay">
         <div class="modal">
             <div id="picked-sender"></div>
-            <div id="picked-station"></div>
             <p id="picked-text"></p>
+            <div id="picked-station"></div>
+
+            <div class="station-divider">
+                現在の位置: <span id="current-station-name">取得中...</span>
+            </div>
+
             <div class="reply-section">
-                <div style="font-size: 0.75rem; margin-bottom: 10px; text-align: left; color: #8899aa;">現在の位置: <span id="current-station-name" style="color: #334d66; font-weight: bold;">取得中...</span></div>
                 <div id="reply-list"></div>
                 <div class="reply-input-area" id="reply-form-area">
                     <textarea id="reply-input" class="reply-input" placeholder="返信を書く..."></textarea>
@@ -109,8 +117,8 @@
             const savedName = localStorage.getItem('ekiUserNickname');
             if (savedName) { myName = savedName; } 
             else {
-                const colors = ["茜色", "瑠璃色", "琥珀色", "浅葱色", "薄桜色", "翡翠色", "山吹色", "墨色", "露草色", "藤色", "勿忘草色", "向日葵色", "群青色", "千歳緑", "珊瑚色", "萌黄", "葡萄色", "空色", "真珠色", "宵闇色"];
-                const suffixes = ["旅人", "かもめ", "漂流者", "乗客", "潮風", "迷い子", "贈り主", "途中下車", "駅員", "案内人", "砂時計", "月明かり", "星屑", "くじら", "ぺんぎん", "灯台守", "渡し守", "切符切り", "夜汽車", "波音"];
+                const colors = ["茜色", "瑠璃色", "琥珀色", "浅葱色", "翡翠色"];
+                const suffixes = ["旅人", "かもめ", "漂流者", "駅員", "月明かり"];
                 myName = colors[Math.floor(Math.random()*colors.length)] + "の" + suffixes[Math.floor(Math.random()*suffixes.length)] + "さん";
                 localStorage.setItem('ekiUserNickname', myName);
             }
@@ -126,7 +134,7 @@
                     if(data.response.station) {
                         currentStation = `${data.response.station[0].line} ${data.response.station[0].name}駅`;
                         document.querySelector('#station-display span').innerText = currentStation + " 付近";
-                        if(document.getElementById('current-station-name')) document.getElementById('current-station-name').innerText = currentStation;
+                        document.getElementById('current-station-name').innerText = currentStation;
                     }
                 } catch(e) {}
             });
@@ -135,14 +143,11 @@
         document.getElementById('send-btn').onclick = async () => {
             const input = document.getElementById('message-input');
             if(!input.value) return;
-            try {
-                const docRef = await addDoc(collection(db, "bottles"), {
-                    text: input.value, station: currentStation, senderName: myName, createdAt: serverTimestamp(), readCount: 0 
-                });
-                saveHistory('sharedMyBottles', docRef.id, input.value);
-                alert("海に流しました！");
-                input.value = ""; loadAllHistories();
-            } catch (e) { alert("エラー"); }
+            const docRef = await addDoc(collection(db, "bottles"), {
+                text: input.value, station: currentStation, senderName: myName, createdAt: serverTimestamp(), readCount: 0 
+            });
+            saveHistory('sharedMyBottles', docRef.id, input.value);
+            alert("海に流しました！"); input.value = ""; loadAllHistories();
         };
 
         document.getElementById('pick-btn').onclick = async () => {
@@ -150,122 +155,87 @@
             const senderDisplay = document.getElementById('picked-sender');
             const stationDisplay = document.getElementById('picked-station');
             const replyList = document.getElementById('reply-list');
-            const overlay = document.getElementById('overlay');
             
             document.getElementById('reply-form-area').style.display = 'block';
             textDisplay.innerText = `捜索中...`;
             senderDisplay.innerText = "";
             stationDisplay.innerText = "";
             replyList.innerHTML = ""; 
-            overlay.style.display = 'flex';
+            document.getElementById('overlay').style.display = 'flex';
 
-            try {
-                const q = query(collection(db, "bottles"), where("station", "==", currentStation), where("readCount", "<", 11), limit(10));
-                const snap = await getDocs(q);
-                if(!snap.empty) {
-                    const target = snap.docs[Math.floor(Math.random() * snap.size)];
-                    currentBottleId = target.id;
-                    const data = target.data();
-                    await updateDoc(doc(db, "bottles", target.id), { readCount: increment(1) });
-                    senderDisplay.innerText = data.senderName || "無名の旅人さん";
-                    textDisplay.innerText = data.text;
-                    stationDisplay.innerText = `漂着地: ${data.station}`;
-                    loadReplies(target.id, replyList);
-                } else { 
-                    textDisplay.innerText = "ここにはまだボトルがありません。";
-                }
-            } catch (e) { console.error(e); }
+            const q = query(collection(db, "bottles"), where("station", "==", currentStation), where("readCount", "<", 11), limit(10));
+            const snap = await getDocs(q);
+            if(!snap.empty) {
+                const target = snap.docs[Math.floor(Math.random() * snap.size)];
+                currentBottleId = target.id;
+                const data = target.data();
+                await updateDoc(doc(db, "bottles", target.id), { readCount: increment(1) });
+                senderDisplay.innerText = data.senderName;
+                textDisplay.innerText = data.text;
+                stationDisplay.innerText = data.station + ' にて';
+                loadReplies(target.id, replyList);
+            } else { textDisplay.innerText = "ボトルが見つかりませんでした。"; }
         };
 
         document.getElementById('reply-send-btn').onclick = async () => {
             const input = document.getElementById('reply-input');
             if(!input.value || !currentBottleId) return;
-            try {
-                const bSnap = await getDoc(doc(db, "bottles", currentBottleId));
-                await addDoc(collection(db, "replies"), { 
-                    parentId: currentBottleId, 
-                    text: input.value, 
-                    senderName: myName, 
-                    station: currentStation,
-                    createdAt: serverTimestamp() 
-                });
-                await updateDoc(doc(db, "bottles", currentBottleId), { station: currentStation });
-                saveHistory('myReplyBottles', currentBottleId, bSnap.data().text);
-                alert("返信を流しました！");
-                document.getElementById('overlay').style.display = 'none';
-                input.value = ""; loadAllHistories();
-            } catch (e) { alert("失敗"); }
+            const bSnap = await getDoc(doc(db, "bottles", currentBottleId));
+            await addDoc(collection(db, "replies"), { 
+                parentId: currentBottleId, text: input.value, senderName: myName, station: currentStation, createdAt: serverTimestamp() 
+            });
+            await updateDoc(doc(db, "bottles", currentBottleId), { station: currentStation });
+            saveHistory('myReplyBottles', currentBottleId, bSnap.data().text);
+            alert("返信を流しました！"); document.getElementById('overlay').style.display = 'none';
+            input.value = ""; loadAllHistories();
         };
 
         function saveHistory(key, id, text) {
             let list = JSON.parse(localStorage.getItem(key) || '[]');
-            list = list.filter(item => item.id !== id);
+            list = list.filter(i => i.id !== id);
             list.unshift({ id, text: text.substring(0, 20) + "...", date: new Date().toLocaleTimeString() });
             localStorage.setItem(key, JSON.stringify(list.slice(0, 10)));
         }
 
-        function loadAllHistories() {
-            renderHistory('sharedMyBottles', 'my-bottles-list');
-            renderHistory('myReplyBottles', 'my-replies-list');
-        }
+        function loadAllHistories() { renderHistory('sharedMyBottles', 'my-bottles-list'); renderHistory('myReplyBottles', 'my-replies-list'); }
 
         function renderHistory(key, elementId) {
-            const listDiv = document.getElementById(elementId);
+            const div = document.getElementById(elementId);
             const list = JSON.parse(localStorage.getItem(key) || '[]');
-            listDiv.innerHTML = list.length ? "" : "<p style='font-size:0.75rem; color:#8899aa'>履歴はありません</p>";
-            list.forEach(item => {
-                const div = document.createElement('div');
-                div.className = 'history-item';
-                div.innerHTML = `<div>${item.text}</div><div class="history-meta">${item.date}</div>`;
-                div.onclick = () => showSpecificBottle(item.id);
-                listDiv.appendChild(div);
+            div.innerHTML = list.length ? "" : "<p style='font-size:0.75rem; color:#8899aa'>履歴なし</p>";
+            list.forEach(i => {
+                const h = document.createElement('div'); h.className = 'history-item';
+                h.innerHTML = `<div>${i.text}</div><div class="history-meta">${i.date}</div>`;
+                h.onclick = () => showSpecificBottle(i.id); div.appendChild(h);
             });
         }
 
-        async function loadReplies(bottleId, listElement) {
-            const qR = query(collection(db, "replies"), where("parentId", "==", bottleId), orderBy("createdAt", "asc"));
-            const rSnap = await getDocs(qR);
+        async function loadReplies(id, listElement) {
+            const q = query(collection(db, "replies"), where("parentId", "==", id), orderBy("createdAt", "asc"));
+            const snap = await getDocs(q);
             listElement.innerHTML = "";
-            rSnap.forEach(r => {
+            snap.forEach(r => {
                 const rd = r.data();
-                const div = document.createElement('div');
-                div.className = 'reply-item';
-                div.innerHTML = `
-                    <span class="reply-sender">${rd.senderName || "旅人さん"}</span>
-                    <span class="reply-text">${rd.text}</span>
-                    <span class="reply-location">${rd.station ? rd.station + ' にて' : ''}</span>
-                `;
-                listElement.appendChild(div);
+                const d = document.createElement('div'); d.className = 'reply-item';
+                d.innerHTML = `<span class="reply-sender">${rd.senderName}</span><span class="reply-text">${rd.text}</span><span class="reply-location">${rd.station ? rd.station + ' にて' : ''}</span>`;
+                listElement.appendChild(d);
             });
         }
 
         async function showSpecificBottle(id) {
             const overlay = document.getElementById('overlay');
-            const textDisplay = document.getElementById('picked-text');
-            const senderDisplay = document.getElementById('picked-sender');
-            const stationDisplay = document.getElementById('picked-station');
-            const replyList = document.getElementById('reply-list');
             document.getElementById('reply-form-area').style.display = 'none';
             overlay.style.display = 'flex';
-            
-            textDisplay.innerText = "読込中...";
-            senderDisplay.innerText = "";
-            stationDisplay.innerText = "";
-            replyList.innerHTML = "";
-
             const d = await getDoc(doc(db, "bottles", id));
             if (d.exists()) {
                 const data = d.data();
-                senderDisplay.innerText = data.senderName || "無名の旅人さん";
-                textDisplay.innerText = data.text;
-                stationDisplay.innerText = `現在地: ${data.station}`;
-                loadReplies(id, replyList);
+                document.getElementById('picked-sender').innerText = data.senderName;
+                document.getElementById('picked-text').innerText = data.text;
+                document.getElementById('picked-station').innerText = data.station + ' にて';
+                document.getElementById('current-station-name').innerText = currentStation;
+                loadReplies(id, document.getElementById('reply-list'));
             }
         }
-
-        window.resetLocalStorage = () => {
-            if (confirm("全データを削除しますか？")) { localStorage.clear(); location.reload(); }
-        };
 
         document.getElementById('close-btn').onclick = () => document.getElementById('overlay').style.display = 'none';
         window.onload = () => { initMyName(); getStation(); loadAllHistories(); setInterval(getStation, 30000); };
