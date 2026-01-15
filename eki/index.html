@@ -26,9 +26,10 @@
         .modal { background: white; padding: 20px; border-radius: 20px; width: 85%; text-align: center; max-width: 350px; max-height: 85vh; overflow-y: auto; }
         
         /* メッセージ表示エリア（親メッセージ） */
+        .main-message-box { background: #f0f7ff; padding: 15px; border-radius: 15px; margin-bottom: 5px; text-align: left; }
         #picked-sender { font-size: 0.75rem; color: #5dade2; font-weight: bold; margin-bottom: 5px; text-align: left; }
-        #picked-text { font-size: 1.1rem; line-height: 1.5; margin-bottom: 5px; word-wrap: break-word; text-align: left; border-left: 3px solid #a1c4fd; padding-left: 10px; }
-        #picked-station { font-size: 0.65rem; color: #99aabb; text-align: right; font-style: italic; margin-bottom: 15px; }
+        #picked-text { font-size: 1.1rem; line-height: 1.5; margin-bottom: 8px; word-wrap: break-word; text-align: left; }
+        #picked-station { font-size: 0.65rem; color: #99aabb; text-align: right; font-style: italic; }
 
         /* 現在の位置（中央・点線） */
         .station-divider { border-top: 1px dashed #ccddee; border-bottom: 1px dashed #ccddee; padding: 8px 0; margin: 15px 0; font-size: 0.75rem; color: #8899aa; text-align: center; }
@@ -74,9 +75,11 @@
 
     <div id="overlay">
         <div class="modal">
-            <div id="picked-sender"></div>
-            <p id="picked-text"></p>
-            <div id="picked-station"></div>
+            <div class="main-message-box">
+                <div id="picked-sender"></div>
+                <p id="picked-text"></p>
+                <div id="picked-station"></div>
+            </div>
 
             <div class="station-divider">
                 現在の位置: <span id="current-station-name">取得中...</span>
@@ -118,7 +121,7 @@
             if (savedName) { myName = savedName; } 
             else {
                 const colors = ["茜色", "瑠璃色", "琥珀色", "浅葱色", "翡翠色"];
-                const suffixes = ["旅人", "かもめ", "漂流者", "駅員", "月明かり"];
+                const suffixes = ["旅人", "かもめ", "漂流者", "駅員", "灯台守"];
                 myName = colors[Math.floor(Math.random()*colors.length)] + "の" + suffixes[Math.floor(Math.random()*suffixes.length)] + "さん";
                 localStorage.setItem('ekiUserNickname', myName);
             }
