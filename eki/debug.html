@@ -28,7 +28,7 @@
         #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 100; }
         .modal { background: white; padding: 20px; border-radius: 20px; width: 85%; text-align: center; max-width: 350px; max-height: 85vh; overflow-y: auto; }
         
-        /* ボトル親メッセージ（背景色追加） */
+        /* ボトル親メッセージ */
         .main-message-box { background: #f0f7ff; padding: 15px; border-radius: 15px; margin-bottom: 5px; text-align: left; }
         #picked-sender { font-size: 0.75rem; color: #5dade2; font-weight: bold; margin-bottom: 5px; }
         #picked-text { font-size: 1.1rem; line-height: 1.5; margin-bottom: 8px; word-wrap: break-word; }
@@ -46,10 +46,8 @@
         .btn-reply-send { background: #a1c4fd; color: white; border: none; padding: 12px; border-radius: 10px; font-size: 0.9rem; font-weight: bold; cursor: pointer; width: 100%; }
         .btn-close { margin-top: 20px; background: #eee; border: none; padding: 10px 20px; border-radius: 20px; width: 100%; cursor: pointer; }
         
-        /* リセットボタンのスタイル */
         .debug-reset-area { margin-top: 40px; margin-bottom: 20px; }
         .btn-reset { color: #e74c3c; background: none; border: 1px solid #e74c3c; padding: 5px 15px; border-radius: 10px; cursor: pointer; font-size: 0.7rem; opacity: 0.7; }
-        .btn-reset:hover { background: #ffeaea; opacity: 1; }
     </style>
 </head>
 <body>
@@ -128,11 +126,15 @@
         let currentBottleId = null;
         let myName = "";
 
+        // 本番用と同じ名前生成ロジックに修正
         function initMyName() {
             const savedName = localStorage.getItem('ekiUserNickname');
-            if (savedName) { myName = savedName; } 
-            else {
-                myName = "デバッグさん";
+            if (savedName) { 
+                myName = savedName; 
+            } else {
+                const colors = ["茜色", "瑠璃色", "琥珀色", "薄桜色", "翠色", "浅葱色", "翡翠色"];
+                const suffixes = ["旅人", "かもめ", "漂流者", "駅員", "灯台守", "月明かり"];
+                myName = colors[Math.floor(Math.random()*colors.length)] + "の" + suffixes[Math.floor(Math.random()*suffixes.length)] + "さん";
                 localStorage.setItem('ekiUserNickname', myName);
             }
             document.getElementById('my-name-display').innerText = myName;
