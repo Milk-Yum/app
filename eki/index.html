@@ -71,7 +71,8 @@
                 <div id="reply-list"></div>
                 <div class="reply-input-area" id="reply-form-area">
                     <textarea id="reply-input" class="reply-input" placeholder="返信を書く..."></textarea>
-                    <button id="reply-send-btn" class="btn-reply-send">この駅に流す</button>
+                    <button id="reply-send-btn" class="btn-reply-send">このままの駅で流す</button>
+                    <button id="reply-refresh-send-btn" class="btn-reply-send" style="background: #5dade2;">最寄駅を再取得して流す</button>
                 </div>
             </div>
             <div id="empty-message">ボトルが見つかりませんでした。</div>
@@ -114,16 +115,19 @@
         window.closeModals = () => { document.querySelectorAll('.overlay').forEach(el => el.style.display = 'none'); };
 
         async function getStation() {
-            navigator.geolocation.getCurrentPosition(async (pos) => {
-                const url = `https://express.heartrails.com/api/json?method=getStations&x=${pos.coords.longitude}&y=${pos.coords.latitude}`;
-                try {
-                    const res = await fetch(url); const data = await res.json();
-                    if(data.response.station) {
-                        currentStation = `${data.response.station[0].line} ${data.response.station[0].name}駅`;
-                        document.querySelector('#station-display span').innerText = currentStation + " 付近";
-                        document.getElementById('current-station-name').innerText = currentStation;
-                    }
-                } catch(e) {}
+            return new Promise((resolve) => {
+                navigator.geolocation.getCurrentPosition(async (pos) => {
+                    const url = `https://express.heartrails.com/api/json?method=getStations&x=${pos.coords.longitude}&y=${pos.coords.latitude}`;
+                    try {
+                        const res = await fetch(url); const data = await res.json();
+                        if(data.response.station) {
+                            currentStation = `${data.response.station[0].line} ${data.response.station[0].name}駅`;
+                            document.querySelector('#station-display span').innerText = currentStation + " 付近";
+                            document.getElementById('current-station-name').innerText = currentStation;
+                        }
+                    } catch(e) {}
+                    resolve();
+                }, () => resolve());
             });
         }
 
@@ -151,20 +155,30 @@
                 document.getElementById('picked-text').innerText = data.text;
                 document.getElementById('picked-station').innerText = data.station + ' にて';
                 content.style.display = 'block';
-                document.getElementById('reply-form-area').style.display = 'flex'; // 返信フォームを表示
+                document.getElementById('reply-form-area').style.display = 'flex';
                 loadReplies(target.id, document.getElementById('reply-list'));
             } else { empty.style.display = 'block'; }
         };
 
-        document.getElementById('reply-send-btn').onclick = async () => {
+        // 返信共通アクション
+        async function sendReply() {
             const input = document.getElementById('reply-input');
             if(!input.value || !currentBottleId) return;
             const bSnap = await getDoc(doc(db, "bottles", currentBottleId));
             await addDoc(collection(db, "replies"), { parentId: currentBottleId, text: input.value, senderName: myName, station: currentStation, createdAt: serverTimestamp() });
             await updateDoc(doc(db, "bottles", currentBottleId), { station: currentStation });
             saveHistory('myReplyBottles', currentBottleId, bSnap.data().text);
-            alert("返信を流しました！"); closeModals();
+            alert(`${currentStation} から返信を流しました！`); closeModals();
             input.value = ""; loadAllHistories();
+        }
+
+        document.getElementById('reply-send-btn').onclick = sendReply;
+        document.getElementById('reply-refresh-send-btn').onclick = async () => {
+            const btn = document.getElementById('reply-refresh-send-btn');
+            btn.innerText = "駅を取得中...";
+            await getStation();
+            await sendReply();
+            btn.innerText = "最寄駅を再取得して流す";
         };
 
         function saveHistory(key, id, text) {
@@ -199,7 +213,7 @@
             const overlay = document.getElementById('bottle-overlay');
             document.getElementById('bottle-content').style.display = 'block';
             document.getElementById('empty-message').style.display = 'none';
-            document.getElementById('reply-form-area').style.display = 'none'; // 履歴閲覧時は返信不可
+            document.getElementById('reply-form-area').style.display = 'none';
             overlay.style.display = 'flex';
             const d = await getDoc(doc(db, "bottles", id));
             if (d.exists()) {
