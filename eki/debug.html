@@ -3,47 +3,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eki Bottle Mail (Debug Full)</title>
+    <title>Eki Bottle Mail (Debug)</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍾</text></svg>">
     <style>
         body { margin: 0; padding: 0; font-family: sans-serif; background: linear-gradient(180deg, #a1c4fd 0%, #c2e9fb 100%); min-height: 100vh; display: flex; flex-direction: column; align-items: center; color: #334d66; padding-bottom: 100px; }
         .container { width: 90%; max-width: 400px; margin-top: 20px; text-align: center; }
         .user-profile { font-size: 0.8rem; color: #ffffff; background: rgba(0,0,0,0.1); padding: 5px 15px; border-radius: 20px; margin-bottom: 20px; display: inline-block; }
         h1 { font-size: 1.5rem; color: #ffffff; text-shadow: 1px 1px 4px rgba(0,0,0,0.1); margin-top: 0; }
-        
-        /* 駅擬装用ボックス */
         .station-box { background: rgba(255, 255, 255, 0.6); padding: 15px; border-radius: 20px; margin-bottom: 20px; font-weight: bold; backdrop-filter: blur(5px); cursor: pointer; border: 2px dashed #e74c3c; color: #e74c3c; }
         .sub-text { font-size: 0.7rem; display: block; margin-top: 4px; opacity: 0.8; }
-
         .bottle-card { background: #ffffff; padding: 25px; border-radius: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; }
         textarea { width: 100%; height: 100px; border: 1px solid #e0e7ff; border-radius: 15px; padding: 12px; box-sizing: border-box; font-size: 16px; background: #f9fbff; -webkit-appearance: none; resize: none; }
         .btn-send { background: #5dade2; color: white; border: none; padding: 15px; border-radius: 50px; font-size: 1rem; font-weight: bold; cursor: pointer; }
-        
-        /* 履歴セクション */
         .history-section { width: 100%; text-align: left; margin-top: 20px; }
         .history-title { font-size: 0.9rem; font-weight: bold; color: #667788; margin-bottom: 10px; }
         .history-item { background: rgba(255, 255, 255, 0.5); padding: 12px; border-radius: 15px; margin-bottom: 8px; font-size: 0.85rem; cursor: pointer; }
         .history-meta { font-size: 0.7rem; color: #8899aa; margin-top: 4px; }
-
         .btn-pick-up { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: white; border: none; border-radius: 50%; width: 70px; height: 70px; font-size: 40px; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 15px rgba(0,0,0,0.2); cursor: pointer; z-index: 10; }
-        
-        /* モーダル */
         #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 100; }
         .modal { background: white; padding: 20px; border-radius: 20px; width: 85%; text-align: center; max-width: 350px; max-height: 85vh; overflow-y: auto; }
         #picked-sender { font-size: 0.75rem; color: #5dade2; font-weight: bold; margin-bottom: 5px; }
-        #picked-station { font-size: 0.7rem; color: #8899aa; margin-bottom: 10px; }
         #picked-text { font-size: 1.1rem; line-height: 1.5; margin-bottom: 20px; word-wrap: break-word; }
-        
         .modal-station-trigger { background: #f0f4f8; padding: 8px; border-radius: 10px; margin-bottom: 15px; font-size: 0.75rem; border: 1px dashed #e74c3c; cursor: pointer; color: #e74c3c; }
-
         .reply-section { border-top: 1px dashed #eee; padding-top: 15px; margin-top: 15px; text-align: left; }
         .reply-item { background: #f0f7ff; padding: 8px 12px; border-radius: 10px; font-size: 0.85rem; margin-bottom: 8px; color: #556677; }
         .reply-sender { font-size: 0.65rem; color: #a1c4fd; display: block; margin-bottom: 2px; font-weight: bold; }
-        .reply-input-area { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
-        .reply-input { font-size: 14px; height: 60px; border: 1px solid #eee; border-radius: 10px; padding: 8px; }
-        .btn-reply-send { background: #a1c4fd; color: white; border: none; padding: 12px; border-radius: 10px; font-size: 0.9rem; font-weight: bold; cursor: pointer; }
+        .btn-reply-send { background: #a1c4fd; color: white; border: none; padding: 12px; border-radius: 10px; width: 100%; font-weight: bold; cursor: pointer; }
         .btn-close { margin-top: 20px; background: #eee; border: none; padding: 10px 20px; border-radius: 20px; width: 100%; cursor: pointer; }
-        .btn-reset { background: none; border: none; color: #e74c3c; cursor: pointer; font-size: 0.7rem; text-decoration: underline; margin-top: 30px; }
     </style>
 </head>
 <body>
@@ -51,14 +37,13 @@
     <div class="container">
         <div class="user-profile">あなたは <span id="my-name-display">...</span> です</div>
         <h1>Eki Bottle Mail (Debug)</h1>
-        
         <div id="station-display" class="station-box" onclick="debugChangeStation()">
-            <span id="main-station-name">駅を選択してください</span>
+            <span id="main-station-name">駅を擬装してください</span>
             <span class="sub-text">(タップで位置を擬装)</span>
         </div>
         
         <div class="bottle-card">
-            <textarea id="message-input" placeholder="この駅にメッセージを置く..."></textarea>
+            <textarea id="message-input" placeholder="この駅に流す..."></textarea>
             <button id="send-btn" class="btn-send">この駅に流す</button>
         </div>
 
@@ -72,7 +57,7 @@
             <div id="my-replies-list"></div>
         </div>
 
-        <button onclick="resetLocalStorage()" class="btn-reset">全データをリセットして最初から</button>
+        <button onclick="localStorage.clear(); location.reload();" style="margin-top:20px; color:red; background:none; border:none; text-decoration:underline; cursor:pointer;">全リセット</button>
     </div>
 
     <button id="pick-btn" class="btn-pick-up">🍾</button>
@@ -80,19 +65,19 @@
     <div id="overlay">
         <div class="modal">
             <div id="picked-sender"></div>
-            <div id="picked-station"></div>
+            <div id="picked-station" style="font-size: 0.7rem; color: #8899aa; margin-bottom: 10px;"></div>
             <p id="picked-text"></p>
             <div class="reply-section">
                 <div class="modal-station-trigger" onclick="debugChangeStation()">
-                    投函先: <span id="current-station-name">未設定</span> (タップで変更)
+                    投函先: <span id="current-station-name">未設定</span>
                 </div>
                 <div id="reply-list"></div>
                 <div class="reply-input-area" id="reply-form-area">
-                    <textarea id="reply-input" class="reply-input" placeholder="返信を書く..."></textarea>
-                    <button id="reply-send-btn" class="btn-reply-send">この駅に流す</button>
+                    <textarea id="reply-input" style="width:100%; height:60px; margin-bottom:10px;" placeholder="返信を書く..."></textarea>
+                    <button id="reply-send-btn" class="btn-reply-send">返信して流す</button>
                 </div>
             </div>
-            <button id="close-btn" class="btn-close">海に戻す</button>
+            <button id="close-btn" class="btn-close">戻る</button>
         </div>
     </div>
 
@@ -116,7 +101,6 @@
         let currentBottleId = null;
         let myName = "";
 
-        // 名前初期化
         function initMyName() {
             const savedName = localStorage.getItem('ekiUserNickname');
             if (savedName) { myName = savedName; } 
@@ -129,47 +113,35 @@
             document.getElementById('my-name-display').innerText = myName;
         }
 
-        // UI更新
-        function updateUI() {
-            document.getElementById('main-station-name').innerText = "【擬装中】" + currentStation;
-            document.getElementById('current-station-name').innerText = currentStation;
-        }
-
-        // 駅擬装
         window.debugChangeStation = () => {
-            const stations = ["JR山手線 新宿駅", "JR山手線 渋谷駅", "JR山手線 東京駅", "東急東横線 横浜駅", "阪急神戸本線 大阪梅田駅"];
-            const choice = prompt("擬装駅を選択(1-5 または入力):");
-            if (choice === "1") currentStation = stations[0];
-            else if (choice === "2") currentStation = stations[1];
-            else if (choice === "3") currentStation = stations[2];
-            else if (choice === "4") currentStation = stations[3];
-            else if (choice === "5") currentStation = stations[4];
-            else if (choice) currentStation = choice;
-            updateUI();
+            const choice = prompt("擬装駅を入力してください（例: JR新宿駅）:");
+            if (choice) {
+                currentStation = choice;
+                document.getElementById('main-station-name').innerText = "【擬装】" + currentStation;
+                document.getElementById('current-station-name').innerText = currentStation;
+            }
         };
 
-        // 送信
         document.getElementById('send-btn').onclick = async () => {
             const input = document.getElementById('message-input');
             if(!input.value) return;
-            try {
-                const docRef = await addDoc(collection(db, "bottles"), {
-                    text: input.value, station: currentStation, senderName: myName, createdAt: serverTimestamp(), readCount: 0 
-                });
-                saveHistory('sharedMyBottles', docRef.id, input.value);
-                alert(`${currentStation}に流しました！`);
-                input.value = ""; loadAllHistories();
-            } catch (e) { alert("送信エラー"); }
+            const docRef = await addDoc(collection(db, "bottles"), {
+                text: input.value, station: currentStation, senderName: myName, createdAt: serverTimestamp(), readCount: 0 
+            });
+            saveHistory('sharedMyBottles', docRef.id, input.value);
+            alert("送信完了"); input.value = ""; loadAllHistories();
         };
 
-        // 拾う
         document.getElementById('pick-btn').onclick = async () => {
-            if(currentStation === "どこかの駅") return alert("先に駅を擬装してください");
-            const overlay = document.getElementById('overlay');
-            document.getElementById('reply-form-area').style.display = 'block';
-            document.getElementById('picked-text').innerText = "捜索中...";
-            overlay.style.display = 'flex';
-            updateUI();
+            if(currentStation === "どこかの駅") return alert("駅を擬装してください");
+            const textDisplay = document.getElementById('picked-text');
+            const replyList = document.getElementById('reply-list');
+            
+            // ★リセット処理
+            textDisplay.innerText = "捜索中...";
+            document.getElementById('picked-sender').innerText = "";
+            replyList.innerHTML = "";
+            document.getElementById('overlay').style.display = 'flex';
 
             const q = query(collection(db, "bottles"), where("station", "==", currentStation), where("readCount", "<", 11), limit(10));
             const snap = await getDocs(q);
@@ -178,34 +150,32 @@
                 currentBottleId = target.id;
                 const data = target.data();
                 await updateDoc(doc(db, "bottles", target.id), { readCount: increment(1) });
-                document.getElementById('picked-sender').innerText = data.senderName || "無名の旅人さん";
-                document.getElementById('picked-text').innerText = data.text;
-                document.getElementById('picked-station').innerText = `漂着地: ${data.station}`;
+                document.getElementById('picked-sender').innerText = data.senderName;
+                textDisplay.innerText = data.text;
                 loadReplies(target.id);
-            } else { document.getElementById('picked-text').innerText = "ボトルがありませんでした。"; }
+            } else { 
+                textDisplay.innerText = "ボトルがありませんでした。"; 
+                replyList.innerHTML = ""; // 念のため
+            }
         };
 
-        // 返信送信
         document.getElementById('reply-send-btn').onclick = async () => {
             const input = document.getElementById('reply-input');
             if(!input.value || !currentBottleId) return;
-            try {
-                const bSnap = await getDoc(doc(db, "bottles", currentBottleId));
-                await addDoc(collection(db, "replies"), { 
-                    parentId: currentBottleId, text: input.value, senderName: myName, createdAt: serverTimestamp() 
-                });
-                await updateDoc(doc(db, "bottles", currentBottleId), { station: currentStation });
-                saveHistory('myReplyBottles', currentBottleId, bSnap.data().text);
-                alert("返信完了！");
-                document.getElementById('overlay').style.display = 'none';
-                input.value = ""; loadAllHistories();
-            } catch (e) { alert("失敗"); }
+            const bSnap = await getDoc(doc(db, "bottles", currentBottleId));
+            await addDoc(collection(db, "replies"), { 
+                parentId: currentBottleId, text: input.value, senderName: myName, createdAt: serverTimestamp() 
+            });
+            await updateDoc(doc(db, "bottles", currentBottleId), { station: currentStation });
+            saveHistory('myReplyBottles', currentBottleId, bSnap.data().text);
+            alert("返信完了");
+            document.getElementById('overlay').style.display = 'none';
+            input.value = ""; loadAllHistories();
         };
 
-        // 共通履歴処理
         function saveHistory(key, id, text) {
             let list = JSON.parse(localStorage.getItem(key) || '[]');
-            list = list.filter(item => item.id !== id);
+            list = list.filter(i => i.id !== id);
             list.unshift({ id, text: text.substring(0, 20) + "...", date: new Date().toLocaleTimeString() });
             localStorage.setItem(key, JSON.stringify(list.slice(0, 10)));
         }
@@ -218,47 +188,41 @@
         function renderList(key, elementId) {
             const div = document.getElementById(elementId);
             const list = JSON.parse(localStorage.getItem(key) || '[]');
-            div.innerHTML = list.length ? "" : "<p style='font-size:0.75rem; color:#8899aa'>履歴なし</p>";
-            list.forEach(item => {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'history-item';
-                itemDiv.innerHTML = `<div>${item.text}</div><div class="history-meta">${item.date}</div>`;
-                itemDiv.onclick = () => showSpecificBottle(item.id);
-                div.appendChild(itemDiv);
+            div.innerHTML = list.length ? "" : "<p style='font-size:0.7rem;'>なし</p>";
+            list.forEach(i => {
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                item.innerHTML = `<div>${i.text}</div><div class="history-meta">${i.date}</div>`;
+                item.onclick = () => showSpecificBottle(i.id);
+                div.appendChild(item);
             });
         }
 
         async function loadReplies(id) {
             const list = document.getElementById('reply-list');
-            list.innerHTML = "";
             const q = query(collection(db, "replies"), where("parentId", "==", id), orderBy("createdAt", "asc"));
             const snap = await getDocs(q);
+            list.innerHTML = "";
             snap.forEach(r => {
                 const d = r.data();
                 const item = document.createElement('div');
                 item.className = 'reply-item';
-                item.innerHTML = `<span class="reply-sender">${d.senderName || "旅人さん"}</span>${d.text}`;
+                item.innerHTML = `<span class="reply-sender">${d.senderName}</span>${d.text}`;
                 list.appendChild(item);
             });
         }
 
         async function showSpecificBottle(id) {
-            const overlay = document.getElementById('overlay');
             document.getElementById('reply-form-area').style.display = 'none';
-            overlay.style.display = 'flex';
+            document.getElementById('overlay').style.display = 'flex';
             const d = await getDoc(doc(db, "bottles", id));
             if (d.exists()) {
                 const data = d.data();
                 document.getElementById('picked-sender').innerText = data.senderName;
                 document.getElementById('picked-text').innerText = data.text;
-                document.getElementById('picked-station').innerText = `現在地: ${data.station}`;
                 loadReplies(id);
             }
         }
-
-        window.resetLocalStorage = () => {
-            if (confirm("全リセットしますか？")) { localStorage.clear(); location.reload(); }
-        };
 
         document.getElementById('close-btn').onclick = () => document.getElementById('overlay').style.display = 'none';
         window.onload = () => { initMyName(); loadAllHistories(); };
