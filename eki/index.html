@@ -89,7 +89,7 @@
             <div class="transfer-box">
                 <small style="color:#8899aa;">引き継ぎコード</small>
                 <span class="transfer-id" id="display-user-id">----</span>
-                <button style="font-size:0.7rem; width:100%; border:1px solid #5dade2; background:none; color:#5dade2; border-radius:5px; padding:5px;" onclick="copyMyId()">コードをコピー</button>
+                <button id="copy-id-btn" style="font-size:0.7rem; width:100%; border:1px solid #5dade2; background:none; color:#5dade2; border-radius:5px; padding:5px; cursor:pointer;" onclick="copyMyId(event)">コードをコピー</button>
             </div>
             <div class="transfer-box">
                 <small style="color:#8899aa;">他端末から復元</small>
@@ -261,21 +261,49 @@
         window.openSettings = () => document.getElementById('settings-overlay').style.display = 'flex';
         window.closeModals = () => document.querySelectorAll('.overlay').forEach(el => el.style.display = 'none');
         
-        // 修正：コピー時に今の履歴をクラウドへ保存
-        window.copyMyId = async () => {
+        // 修正：コピーを確実にし、その後にバックアップ
+        window.copyMyId = async (event) => {
+            const btn = event.currentTarget;
+            const originalText = btn.innerText;
+            
+            // 1. まずコピーを実行（ブラウザのセキュリティ制限回避）
+            try {
+                await navigator.clipboard.writeText(myUserId);
+                btn.innerText = "コピー完了！";
+                btn.style.borderColor = "#2ecc71";
+                btn.style.color = "#2ecc71";
+            } catch (err) {
+                const textArea = document.createElement("textarea");
+                textArea.value = myUserId;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                btn.innerText = "コピー完了！";
+            }
+
+            // 2. 次にバックアップをFirestoreへ
             const myBottles = localStorage.getItem('sharedMyBottles');
             const myReplies = localStorage.getItem('myReplyBottles');
-            await updateDoc(doc(db, "users", myUserId), {
-                historyBackup: { myBottles, myReplies }
-            });
-            navigator.clipboard.writeText(myUserId);
-            alert("履歴のバックアップとコードのコピーが完了しました！");
+            try {
+                await updateDoc(doc(db, "users", myUserId), {
+                    historyBackup: { myBottles, myReplies }
+                });
+                console.log("History backup successful");
+            } catch (e) {
+                console.error("Backup failed", e);
+            }
+
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.style.borderColor = "#5dade2";
+                btn.style.color = "#5dade2";
+            }, 2000);
         };
 
         window.resetNickname = async () => { const n = prompt("新しい名前:", myName); if(n) { myName = n; localStorage.setItem('ekiUserNickname', n); await updateDoc(doc(db, "users", myUserId), { nickname: n }); location.reload(); } };
         window.resetAll = () => { if(confirm("リセットしますか？")) { localStorage.clear(); location.reload(); } };
         
-        // 修正：復元時にクラウドから履歴を読み込む
         window.importUser = async () => {
             const id = document.getElementById('import-id-input').value.trim();
             const uDoc = await getDoc(doc(db, "users", id));
@@ -284,7 +312,6 @@
                 localStorage.clear();
                 localStorage.setItem('ekiUserId', id);
                 localStorage.setItem('ekiUserNickname', data.nickname);
-                // バックアップがあれば復元
                 if(data.historyBackup) {
                     if(data.historyBackup.myBottles) localStorage.setItem('sharedMyBottles', data.historyBackup.myBottles);
                     if(data.historyBackup.myReplies) localStorage.setItem('myReplyBottles', data.historyBackup.myReplies);
