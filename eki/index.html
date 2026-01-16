@@ -14,11 +14,11 @@
         .container { width: 90%; max-width: 400px; text-align: center; }
         .user-profile-wrapper { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 20px; }
         
-        /* ニックネーム部分：紺色固定に修正 */
-        .user-profile { font-size: 0.8rem; color: #1a2a6c; background: rgba(255,255,255,0.3); padding: 5px 15px; border-radius: 20px; display: inline-block; font-weight: bold; }
-        #my-name-display { color: #1a2a6c; }
+        /* ヘッダー：あなたは(白) 名前(紺) です(白) */
+        .user-profile { font-size: 0.8rem; color: #ffffff; background: rgba(0,0,0,0.1); padding: 5px 15px; border-radius: 20px; display: inline-block; }
+        #my-name-display { color: #1a2a6c; font-weight: bold; }
         
-        .settings-icon { cursor: pointer; font-size: 1.2rem; color: rgba(255,255,255,0.8); transition: transform 0.3s; }
+        .settings-icon { cursor: pointer; font-size: 1.2rem; color: rgba(255,255,255,0.8); }
         h1 { font-size: 1.5rem; color: #ffffff; text-shadow: 1px 1px 4px rgba(0,0,0,0.1); margin-top: 0; }
         .station-box { background: rgba(255, 255, 255, 0.6); padding: 15px; border-radius: 20px; margin-bottom: 20px; font-weight: bold; backdrop-filter: blur(5px); min-height: 20px; }
         .bottle-card { background: #ffffff; padding: 25px; border-radius: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; }
@@ -30,14 +30,11 @@
         .history-title { font-size: 0.9rem; font-weight: bold; color: #667788; margin-bottom: 10px; }
         .history-item { background: rgba(255, 255, 255, 0.5); padding: 12px; border-radius: 15px; margin-bottom: 10px; font-size: 0.85rem; cursor: pointer; }
         .history-meta { font-size: 0.7rem; color: #8899aa; margin-top: 4px; }
-        .btn-pick-up { position: fixed; bottom: calc(20px + var(--sab)); left: 50%; transform: translateX(-50%); width: 95px; height: 95px; border: 4px solid white; border-radius: 50%; background: url('bottle307.png') no-repeat center center; background-size: cover; box-shadow: 0 10px 30px rgba(0,0,0,0.3); cursor: pointer; z-index: 10; outline: none; transition: transform 0.2s; }
+        .btn-pick-up { position: fixed; bottom: calc(20px + var(--sab)); left: 50%; transform: translateX(-50%); width: 95px; height: 95px; border: 4px solid white; border-radius: 50%; background: url('bottle307.png') no-repeat center center; background-size: cover; box-shadow: 0 10px 30px rgba(0,0,0,0.3); cursor: pointer; z-index: 10; outline: none; }
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 100; }
         .modal { background: white; padding: 20px; border-radius: 20px; width: 85%; text-align: center; max-width: 350px; max-height: 85vh; overflow-y: auto; }
         .main-message-box { background: #f0f7ff; padding: 15px; border-radius: 15px; margin-bottom: 5px; text-align: left; }
-        
-        /* ボトル位置の罫線を上下に修正 */
         #station-info-area { padding: 10px 0; margin: 15px 0; font-size: 0.8rem; color: #8899aa; border-top: 1px dashed #ddd; border-bottom: 1px dashed #ddd; }
-        
         .btn-close { margin-top: 20px; background: #eee; border: none; padding: 10px 20px; border-radius: 20px; width: 100%; cursor: pointer; }
         .transfer-box { background: #f4f7f9; padding: 12px; border-radius: 15px; margin: 10px 0; text-align: left; border: 1px solid #e0e7ff; }
         .transfer-id { font-family: monospace; font-weight: bold; color: #1a2a6c; display: block; background: #fff; padding: 5px; margin: 5px 0; text-align: center; border-radius: 5px; }
@@ -70,7 +67,7 @@
         <div class="modal">
             <div id="bottle-content">
                 <div class="main-message-box">
-                    <div id="picked-sender" style="font-size: 0.75rem; color: #5dade2; font-weight: bold;"></div>
+                    <div id="picked-sender" style="font-size: 0.75rem; font-weight: bold; margin-bottom: 5px;"></div>
                     <div id="picked-text" style="font-size: 1.1rem; line-height: 1.5; margin: 8px 0;"></div>
                     <div id="picked-station" style="font-size: 0.65rem; color: #99aabb; text-align: right;"></div>
                 </div>
@@ -141,7 +138,7 @@
             list.forEach(i => {
                 const h = document.createElement('div'); h.className = 'history-item';
                 h.innerHTML = `<div>${i.text}</div><div class="history-meta">${i.date}</div>`;
-                h.onclick = () => showSpecificBottle(i.id, key === 'myReplyBottles'); // 返信履歴からの場合はフラグ立て
+                h.onclick = () => showSpecificBottle(i.id, key === 'myReplyBottles'); 
                 div.appendChild(h);
             });
         }
@@ -175,11 +172,11 @@
                     const b = await getDoc(doc(db, "bottles", r.data().parentId));
                     if(b.exists()) saveToLocalHistory('myReplyBottles', b.id, b.data().text);
                 }
-            } catch(e) { console.log("Firestore index required for sync"); }
+            } catch(e) {}
         }
 
         async function getStation(updateUI = true) {
-            if(updateUI) document.querySelector('#station-display span').innerText = "ボトルを置く場所を探しています...";
+            if(updateUI) document.querySelector('#station-display span').innerText = "駅を探しています...";
             navigator.geolocation.getCurrentPosition(async (pos) => {
                 const url = `https://express.heartrails.com/api/json?method=getStations&x=${pos.coords.longitude}&y=${pos.coords.latitude}`;
                 try {
@@ -230,11 +227,14 @@
         function showBottleData(id, data, hideForm = false) {
             document.getElementById('bottle-content').style.display = 'block';
             document.getElementById('empty-message').style.display = 'none';
-            // 返信フォームの表示制御（自分のボトル、または返信履歴からの閲覧なら隠す）
             const isMyBottle = (data.senderId === myUserId);
             document.getElementById('reply-form-area').style.display = (isMyBottle || hideForm) ? 'none' : 'flex';
             
-            document.getElementById('picked-sender').innerText = data.senderName;
+            // ニックネーム色の動的切り替え
+            const senderEl = document.getElementById('picked-sender');
+            senderEl.innerText = data.senderName;
+            senderEl.style.color = isMyBottle ? "#1a2a6c" : "#5dade2"; // 自分なら紺色
+            
             document.getElementById('picked-text').innerText = data.text; 
             document.getElementById('picked-station').innerText = (data.originStation || data.station) + ' にて';
             document.getElementById('station-info-area').innerHTML = `ボトル位置: <span>${data.station}</span>`;
@@ -270,9 +270,12 @@
             listEl.innerHTML = "";
             snap.forEach(r => {
                 const rd = r.data();
+                const isMyReply = (rd.senderId === myUserId);
                 const d = document.createElement('div');
                 d.style.cssText = "background:#f0f7ff; padding:10px; border-radius:12px; font-size:0.85rem; margin-bottom:10px; text-align:left; display:flex; flex-direction:column;";
-                d.innerHTML = `<span style="font-size:0.7rem; color:#5dade2; font-weight:bold;">${rd.senderName}</span><span>${rd.text}</span><span style="font-size:0.6rem; color:#99aabb; text-align:right;">${rd.station} にて</span>`;
+                // 返信一覧でも自分なら名前を紺色に
+                const nameColor = isMyReply ? "#1a2a6c" : "#5dade2";
+                d.innerHTML = `<span style="font-size:0.7rem; color:${nameColor}; font-weight:bold;">${rd.senderName}</span><span>${rd.text}</span><span style="font-size:0.6rem; color:#99aabb; text-align:right;">${rd.station} にて</span>`;
                 listEl.appendChild(d);
             });
         }
