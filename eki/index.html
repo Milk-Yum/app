@@ -10,9 +10,9 @@
         .container { width: 90%; max-width: 400px; margin-top: 20px; text-align: center; }
         .user-profile-wrapper { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 20px; }
         
-        /* 自分の名前を目立たせる */
-        .user-profile { font-size: 0.8rem; color: #ffffff; background: #5dade2; padding: 5px 15px; border-radius: 20px; display: inline-block; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        #my-name-display { color: #fff; text-decoration: underline; }
+        /* 自分のプロフィール表示：シンプルに */
+        .user-profile { font-size: 0.8rem; color: #ffffff; background: rgba(0,0,0,0.1); padding: 5px 15px; border-radius: 20px; display: inline-block; }
+        #my-name-display { font-weight: bold; color: #ffeb3b; } /* 自分の名前だけ黄色（お好みで変えられます） */
 
         .settings-icon { cursor: pointer; font-size: 1.2rem; color: rgba(255,255,255,0.8); transition: transform 0.3s; }
         .settings-icon:hover { transform: rotate(45deg); }
@@ -41,14 +41,12 @@
         .station-divider { border-top: 1px dashed #ccddee; border-bottom: 1px dashed #ccddee; padding: 10px 0; margin: 15px 0; font-size: 0.8rem; color: #8899aa; text-align: center; line-height: 1.6; }
         .station-divider span { color: #334d66; font-weight: bold; }
 
-        /* 返信一覧のスタイル */
-        .reply-item { background: #f8f9fa; padding: 10px 12px; border-radius: 12px; font-size: 0.85rem; margin-bottom: 12px; color: #556677; display: flex; flex-direction: column; text-align: left; border: 1px solid #eee; }
+        /* 返信リストのスタイル */
+        .reply-item { background: #f8f9fa; padding: 10px 12px; border-radius: 12px; font-size: 0.85rem; margin-bottom: 12px; color: #556677; display: flex; flex-direction: column; text-align: left; }
         .reply-sender { font-size: 0.7rem; color: #99aabb; font-weight: bold; margin-bottom: 4px; }
         
-        /* 自分の返信を強調 */
-        .reply-item.is-me { background: #eefbff; border: 1px solid #5dade2; }
-        .reply-item.is-me .reply-sender { color: #5dade2; }
-        .reply-item.is-me .reply-sender::after { content: " (あなた)"; font-size: 0.6rem; }
+        /* 自分の返信の名前だけ色を変える */
+        .reply-item.is-me .reply-sender { color: #5dade2; } 
 
         .reply-location { font-size: 0.65rem; color: #99aabb; text-align: right; font-style: italic; }
         .reply-input-area { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
@@ -206,7 +204,6 @@
         function loadAllHistories() { renderHistory('sharedMyBottles', 'my-bottles-list'); renderHistory('myReplyBottles', 'my-replies-list'); }
         function renderHistory(key, elementId) { const div = document.getElementById(elementId); const list = JSON.parse(localStorage.getItem(key) || '[]'); div.innerHTML = list.length ? "" : "<p style='font-size:0.75rem; color:#8899aa'>なし</p>"; list.forEach(i => { const h = document.createElement('div'); h.className = 'history-item'; h.innerHTML = `<div>${i.text}</div><div class="history-meta">${i.date}</div>`; h.onclick = () => showSpecificBottle(i.id); div.appendChild(h); }); }
         
-        // 返信リストの描画（自分を強調するロジック追加）
         async function loadReplies(id, listElement) { 
             const q = query(collection(db, "replies"), where("parentId", "==", id), orderBy("createdAt", "asc")); 
             const snap = await getDocs(q); 
