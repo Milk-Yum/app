@@ -6,7 +6,6 @@
     <title>Eki Bottle Mail (Debug)</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍾</text></svg>">
     <style>
-        /* CSSはindexと同様（station-boxのみ擬装用の赤いボーダー） */
         body { margin: 0; padding: 0; font-family: sans-serif; background: linear-gradient(180deg, #a1c4fd 0%, #c2e9fb 100%); min-height: 100vh; display: flex; flex-direction: column; align-items: center; color: #334d66; padding-bottom: 100px; }
         .container { width: 90%; max-width: 400px; margin-top: 20px; text-align: center; }
         .user-profile-wrapper { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 20px; }
@@ -68,7 +67,7 @@
                     <div id="picked-text"></div>
                     <div id="picked-station"></div>
                 </div>
-                <div class="station-divider" onclick="debugChangeStation()">現在の位置(擬装): <span id="current-station-name">未設定</span></div>
+                <div class="station-divider" onclick="debugChangeStation()">ボトル位置(擬装): <span id="current-station-name">未設定</span></div>
                 <div id="reply-list"></div>
                 <div class="reply-input-area" id="reply-form-area">
                     <textarea id="reply-input" class="reply-input" placeholder="返信を書く..."></textarea>
@@ -111,7 +110,7 @@
             document.getElementById('my-name-display').innerText = myName;
         }
         window.resetNickname = () => { localStorage.setItem('ekiUserNickname', generateName()); location.reload(); };
-        window.resetAll = () => { if(confirm("全リセットしますか？")) { localStorage.clear(); location.reload(); } };
+        window.resetAll = () => { if(confirm("全リセット？")) { localStorage.clear(); location.reload(); } };
         window.openSettings = () => document.getElementById('settings-overlay').style.display = 'flex';
         window.closeModals = () => document.querySelectorAll('.overlay').forEach(el => el.style.display = 'none');
 
@@ -120,7 +119,6 @@
             if (choice) {
                 currentStation = choice;
                 document.getElementById('main-station-name').innerText = "【擬装中】" + currentStation;
-                document.getElementById('current-station-name').innerText = currentStation;
             }
         };
 
@@ -130,7 +128,7 @@
             const docRef = await addDoc(collection(db, "bottles"), { 
                 text: input.value, 
                 station: currentStation, 
-                originStation: currentStation, // 修正
+                originStation: currentStation, 
                 senderName: myName, 
                 createdAt: serverTimestamp(), 
                 readCount: 0 
@@ -150,11 +148,10 @@
                 const target = snap.docs[Math.floor(Math.random() * snap.size)];
                 currentBottleId = target.id;
                 const data = target.data();
-                
                 document.getElementById('picked-sender').innerText = data.senderName;
                 document.getElementById('picked-text').innerText = data.text;
                 document.getElementById('picked-station').innerText = (data.originStation || data.station) + ' にて';
-                
+                document.getElementById('current-station-name').innerText = data.station; 
                 content.style.display = 'block';
                 document.getElementById('reply-form-area').style.display = 'flex';
                 loadReplies(target.id, document.getElementById('reply-list'));
@@ -178,6 +175,24 @@
             if(choice) { currentStation = choice; sendReply(); }
         };
 
+        async function showSpecificBottle(id) {
+            const overlay = document.getElementById('bottle-overlay');
+            document.getElementById('bottle-content').style.display = 'block';
+            document.getElementById('empty-message').style.display = 'none';
+            document.getElementById('reply-form-area').style.display = 'none';
+            overlay.style.display = 'flex';
+            const d = await getDoc(doc(db, "bottles", id));
+            if (d.exists()) {
+                const data = d.data();
+                document.getElementById('picked-sender').innerText = data.senderName;
+                document.getElementById('picked-text').innerText = data.text;
+                document.getElementById('picked-station').innerText = (data.originStation || data.station) + ' にて';
+                document.getElementById('current-station-name').innerText = data.station; 
+                loadReplies(id, document.getElementById('reply-list'));
+            }
+        }
+
+        // --- 履歴描画系（不変） ---
         function saveHistory(key, id, text) {
             let list = JSON.parse(localStorage.getItem(key) || '[]');
             list = list.filter(i => i.id !== id);
@@ -188,7 +203,7 @@
         function renderHistory(key, elementId) {
             const div = document.getElementById(elementId);
             const list = JSON.parse(localStorage.getItem(key) || '[]');
-            div.innerHTML = list.length ? "" : "<p style='font-size:0.75rem; color:#8899aa'>履歴なし</p>";
+            div.innerHTML = list.length ? "" : "<p style='font-size:0.75rem; color:#8899aa'>なし</p>";
             list.forEach(i => {
                 const h = document.createElement('div'); h.className = 'history-item';
                 h.innerHTML = `<div>${i.text}</div><div class="history-meta">${i.date}</div>`;
@@ -205,21 +220,6 @@
                 d.innerHTML = `<span class="reply-sender">${rd.senderName}</span><span class="reply-text">${rd.text}</span><span class="reply-location">${rd.station} にて</span>`;
                 listElement.appendChild(d);
             });
-        }
-        async function showSpecificBottle(id) {
-            const overlay = document.getElementById('bottle-overlay');
-            document.getElementById('bottle-content').style.display = 'block';
-            document.getElementById('empty-message').style.display = 'none';
-            document.getElementById('reply-form-area').style.display = 'none';
-            overlay.style.display = 'flex';
-            const d = await getDoc(doc(db, "bottles", id));
-            if (d.exists()) {
-                const data = d.data();
-                document.getElementById('picked-sender').innerText = data.senderName;
-                document.getElementById('picked-text').innerText = data.text;
-                document.getElementById('picked-station').innerText = (data.originStation || data.station) + ' にて';
-                loadReplies(id, document.getElementById('reply-list'));
-            }
         }
         window.onload = () => { initMyName(); loadAllHistories(); };
     </script>
