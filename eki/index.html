@@ -10,6 +10,10 @@
         .container { width: 90%; max-width: 400px; margin-top: 20px; text-align: center; }
         .user-profile-wrapper { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 20px; }
         .user-profile { font-size: 0.8rem; color: #ffffff; background: rgba(0,0,0,0.1); padding: 5px 15px; border-radius: 20px; display: inline-block; }
+        
+        /* トップの自分の名前を紺色に */
+        #my-name-display { color: #1a2a6c; font-weight: bold; }
+
         .settings-icon { cursor: pointer; font-size: 1.2rem; color: rgba(255,255,255,0.8); transition: transform 0.3s; }
         .settings-icon:hover { transform: rotate(45deg); }
         h1 { font-size: 1.5rem; color: #ffffff; text-shadow: 1px 1px 4px rgba(0,0,0,0.1); margin-top: 0; }
@@ -36,8 +40,12 @@
         #picked-station { font-size: 0.65rem; color: #99aabb; text-align: right; font-style: italic; }
         .station-divider { border-top: 1px dashed #ccddee; border-bottom: 1px dashed #ccddee; padding: 10px 0; margin: 15px 0; font-size: 0.8rem; color: #8899aa; text-align: center; line-height: 1.6; }
         .station-divider span { color: #334d66; font-weight: bold; }
+        
+        /* 返信リスト：自分の名前を紺色に */
         .reply-item { background: #f0f7ff; padding: 10px 12px; border-radius: 12px; font-size: 0.85rem; margin-bottom: 12px; color: #556677; display: flex; flex-direction: column; text-align: left; }
         .reply-sender { font-size: 0.7rem; color: #5dade2; font-weight: bold; margin-bottom: 4px; }
+        .reply-item.is-me .reply-sender { color: #1a2a6c; } /* 自分の名前だけ紺色 */
+
         .reply-location { font-size: 0.65rem; color: #99aabb; text-align: right; font-style: italic; }
         .reply-input-area { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
         .reply-input { font-size: 14px; height: 60px; border: 1px solid #eee; border-radius: 10px; padding: 8px; resize: none; }
@@ -193,7 +201,21 @@
         function saveHistory(key, id, text) { let list = JSON.parse(localStorage.getItem(key) || '[]'); list = list.filter(i => i.id !== id); list.unshift({ id, text: text.substring(0, 20) + "...", date: new Date().toLocaleTimeString() }); localStorage.setItem(key, JSON.stringify(list.slice(0, 10))); }
         function loadAllHistories() { renderHistory('sharedMyBottles', 'my-bottles-list'); renderHistory('myReplyBottles', 'my-replies-list'); }
         function renderHistory(key, elementId) { const div = document.getElementById(elementId); const list = JSON.parse(localStorage.getItem(key) || '[]'); div.innerHTML = list.length ? "" : "<p style='font-size:0.75rem; color:#8899aa'>なし</p>"; list.forEach(i => { const h = document.createElement('div'); h.className = 'history-item'; h.innerHTML = `<div>${i.text}</div><div class="history-meta">${i.date}</div>`; h.onclick = () => showSpecificBottle(i.id); div.appendChild(h); }); }
-        async function loadReplies(id, listElement) { const q = query(collection(db, "replies"), where("parentId", "==", id), orderBy("createdAt", "asc")); const snap = await getDocs(q); listElement.innerHTML = ""; snap.forEach(r => { const rd = r.data(); const d = document.createElement('div'); d.className = 'reply-item'; d.innerHTML = `<span class="reply-sender">${rd.senderName}</span><span class="reply-text">${rd.text}</span><span class="reply-location">${rd.station} にて</span>`; listElement.appendChild(d); }); }
+        
+        async function loadReplies(id, listElement) { 
+            const q = query(collection(db, "replies"), where("parentId", "==", id), orderBy("createdAt", "asc")); 
+            const snap = await getDocs(q); 
+            listElement.innerHTML = ""; 
+            snap.forEach(r => { 
+                const rd = r.data(); 
+                const isMe = (rd.senderName === myName);
+                const d = document.createElement('div'); 
+                d.className = `reply-item ${isMe ? 'is-me' : ''}`; 
+                d.innerHTML = `<span class="reply-sender">${rd.senderName}</span><span class="reply-text">${rd.text}</span><span class="reply-location">${rd.station} にて</span>`; 
+                listElement.appendChild(d); 
+            }); 
+        }
+
         async function showSpecificBottle(id) { const overlay = document.getElementById('bottle-overlay'); document.getElementById('bottle-content').style.display = 'block'; document.getElementById('empty-message').style.display = 'none'; document.getElementById('reply-form-area').style.display = 'none'; overlay.style.display = 'flex'; const d = await getDoc(doc(db, "bottles", id)); if (d.exists()) { const data = d.data(); document.getElementById('picked-sender').innerText = data.senderName; document.getElementById('picked-text').innerText = data.text; document.getElementById('picked-station').innerText = (data.originStation || data.station) + ' にて'; document.getElementById('station-info-area').innerHTML = `ボトル位置: <span>${data.station}</span>`; loadReplies(id, document.getElementById('reply-list')); } }
         window.openSettings = () => document.getElementById('settings-overlay').style.display = 'flex';
         window.closeModals = () => document.querySelectorAll('.overlay').forEach(el => el.style.display = 'none');
