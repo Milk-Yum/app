@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Eki Bottle (Debug)</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍾</text></svg>">
+    <title>Eki Bottle (Debug Mode)</title>
     <style>
-        /* CSSは index.html と同一のため省略します。実際には index.html の <style> をそのままコピーしてください */
+        /* CSSは index.html と同一 */
         body { margin: 0; padding: 0; font-family: sans-serif; background: linear-gradient(180deg, #a1c4fd 0%, #c2e9fb 100%); min-height: 100vh; display: flex; flex-direction: column; align-items: center; color: #334d66; padding-bottom: 100px; }
         .container { width: 90%; max-width: 400px; margin-top: 20px; text-align: center; }
         .user-profile { font-size: 0.8rem; color: #ffffff; background: rgba(0,0,0,0.1); padding: 5px 15px; border-radius: 20px; display: inline-block; margin-bottom: 20px;}
@@ -16,7 +15,6 @@
         .action-area { display: flex; gap: 8px; }
         .btn-send { background: #5dade2; color: white; border: none; padding: 15px; border-radius: 50px; font-size: 1rem; font-weight: bold; cursor: pointer; flex: 1; }
         .btn-refresh { background: #5dade2; border: none; border-radius: 15px; width: 50px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex: none; }
-        /* 以下、history/overlay等のスタイルも index.html と同様 */
         .history-section { width: 100%; text-align: left; margin-top: 20px; }
         .history-title { font-size: 0.9rem; font-weight: bold; color: #667788; margin-bottom: 10px; }
         .history-item { background: rgba(255, 255, 255, 0.5); padding: 12px; border-radius: 15px; margin-bottom: 10px; font-size: 0.85rem; cursor: pointer; }
@@ -56,7 +54,7 @@
                 </button>
             </div>
         </div>
-        <div class="history-section"><div class="history-title">📬 流したボトル</div><div id="my-bottles-list"></div></div>
+        <div class="history-section"><div class="history-title">📬 置いたボトル</div><div id="my-bottles-list"></div></div>
         <div class="history-section"><div class="history-title">📩 返信したボトル</div><div id="my-replies-list"></div></div>
     </div>
     <button id="pick-btn" class="btn-pick-up">🍾</button>
@@ -82,7 +80,7 @@
                     </div>
                 </div>
             </div>
-            <div id="empty-message" style="display:none; padding:40px 0; color:#889">ボトルが見つかりませんでした</div>
+            <div id="empty-message" style="display:none; padding:40px 0; color:#889">ボトルは見つかりませんでした</div>
             <button onclick="closeModals()" class="btn-close">戻る</button>
         </div>
     </div>
@@ -97,7 +95,6 @@
         
         let currentStation = "未設定駅", currentBottleId = null, myName = "";
 
-        // デバッグ用駅名変更
         window.debugChangeStation = () => {
             const choice = prompt("駅名を擬装:", currentStation);
             if (choice) {
@@ -112,7 +109,8 @@
         document.getElementById('send-btn').onclick = async () => {
             const input = document.getElementById('message-input');
             if(!input.value.trim()) return;
-            await addDoc(collection(db, "bottles"), { text: input.value, station: currentStation, originStation: currentStation, senderName: myName, createdAt: serverTimestamp() });
+            const docRef = await addDoc(collection(db, "bottles"), { text: input.value, station: currentStation, originStation: currentStation, senderName: myName, createdAt: serverTimestamp() });
+            saveHistory('sharedMyBottles', docRef.id, input.value);
             alert("送信しました"); input.value = ""; loadAllHistories();
         };
 
