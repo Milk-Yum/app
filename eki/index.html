@@ -31,25 +31,29 @@
         .history-item { background: rgba(255, 255, 255, 0.5); padding: 12px; border-radius: 15px; margin-bottom: 10px; font-size: 0.85rem; cursor: pointer; }
         .history-meta { font-size: 0.7rem; color: #8899aa; margin-top: 4px; }
 
-        /* イラストを使ったボトルを拾うボタン */
+        /* 【重要】画像イラストを使った丸いボトルを拾うボタン */
         .btn-pick-up { 
             position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); 
-            width: 90px; height: 90px; 
+            width: 95px; height: 95px; 
             border: 4px solid white; border-radius: 50%; 
-            background: url('https://files.oaiusercontent.com/file-X9S7W2U5N7D6R6J6G6B6A6') no-repeat center center;
+            /* 背景にアップロード画像をセット */
+            background: url('bottle768.png') no-repeat center center;
             background-size: cover;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.3); 
+            box-shadow: 0 8px 25px rgba(0,0,0,0.4); 
             cursor: pointer; z-index: 10; 
             padding: 0; transition: transform 0.2s, box-shadow 0.2s;
             overflow: hidden;
+            outline: none;
         }
+        
+        /* ホバーとアクティブ時の演出 */
+        .btn-pick-up:hover { transform: translateX(-50%) scale(1.05); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .btn-pick-up:active { transform: translateX(-50%) scale(0.92); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 100; }
         .modal { background: white; padding: 20px; border-radius: 20px; width: 85%; text-align: center; max-width: 350px; max-height: 85vh; overflow-y: auto; }
         .main-message-box { background: #f0f7ff; padding: 15px; border-radius: 15px; margin-bottom: 5px; text-align: left; }
         
-        /* 親メッセージが自分の場合の紺色 */
         #picked-sender { font-size: 0.75rem; color: #5dade2; font-weight: bold; margin-bottom: 5px; }
         #picked-sender.is-me { color: #1a2a6c; }
 
