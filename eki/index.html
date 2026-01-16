@@ -37,7 +37,6 @@
         .reply-input { font-size: 14px; height: 60px; border: 1px solid #eee; border-radius: 10px; padding: 8px; resize: none; }
         .btn-reply-send { background: #a1c4fd; color: white; border: none; padding: 12px; border-radius: 10px; font-size: 0.9rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
         .btn-close { margin-top: 20px; background: #eee; border: none; padding: 10px 20px; border-radius: 20px; width: 100%; cursor: pointer; }
-        #empty-message { display: none; padding: 40px 20px; color: #8899aa; font-size: 0.9rem; }
     </style>
 </head>
 <body>
@@ -50,7 +49,7 @@
         <div id="station-display" class="station-box"><span>潮の流れを確認中...</span></div>
         <div class="bottle-card">
             <textarea id="message-input" placeholder="今の駅にメッセージを置く..."></textarea>
-            <button id="send-btn" class="btn-send">この駅に流す</button>
+            <button id="send-btn" class="btn-send">ボトルを置く</button>
         </div>
         <div class="history-section"><div class="history-title">📬 流したボトル</div><div id="my-bottles-list"></div></div>
         <div class="history-section"><div class="history-title">📩 返信したボトル</div><div id="my-replies-list"></div></div>
@@ -72,16 +71,16 @@
                 
                 <div class="reply-input-area" id="reply-form-area">
                     <textarea id="reply-input" class="reply-input" placeholder="返信を書く..."></textarea>
-                    <button id="reply-back-btn" class="btn-reply-send">元の駅に戻す</button>
+                    <button id="reply-back-btn" class="btn-reply-send">元の駅にボトルを置く</button>
                     <div style="display: flex; gap: 8px;">
-                        <button id="reply-place-btn" class="btn-reply-send" style="background: #5dade2; flex: 1;">最寄駅に置く</button>
+                        <button id="reply-place-btn" class="btn-reply-send" style="background: #5dade2; flex: 1;">最寄駅にボトルを置く</button>
                         <button id="refresh-station-btn" class="btn-reply-send" style="background: #5dade2; width: 50px; flex: none;">
                             <svg width="20" height="20" fill="white" viewBox="0 0 24 24"><path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
                         </button>
                     </div>
                 </div>
             </div>
-            <div id="empty-message">ボトルが見つかりませんでした。</div>
+            <div id="empty-message">ボトルは見つかりませんでした。</div>
             <button onclick="closeModals()" class="btn-close">戻る</button>
         </div>
     </div>
@@ -105,11 +104,10 @@
         
         let currentStation = "どこかの駅", currentBottleId = null, myName = "";
 
-        // --- 初期設定・地名取得 ---
         function generateName() {
-            const colors = ["茜色","瑠璃色","琥珀色","薄桜色","翡翠色","浅葱色","萌葱色","山吹色","藤色","銀鼠色","漆黒","純白","群青色","若草色","藍色","向日葵色","菫色","珊瑚色","黄金色","空色"];
-            const jobs = ["旅人","かもめ","漂流者","駅員","灯台守","月明かり","風来坊","詩人","迷い子","案内人","観測者","夢想家","開拓者","守護者","訪問者","記録係","職人","賢者","踊り子","奏者"];
-            return colors[Math.floor(Math.random()*20)] + "の" + jobs[Math.floor(Math.random()*20)] + "さん";
+            const colors = ["茜色","瑠璃色","琥珀色","翡翠色","浅葱色","藤色","銀鼠色","群青色","若草色","空色"];
+            const jobs = ["旅人","かもめ","漂流者","駅員","灯台守","月明かり","風来坊","詩人","迷い子","奏者"];
+            return colors[Math.floor(Math.random()*colors.length)] + "の" + jobs[Math.floor(Math.random()*jobs.length)] + "さん";
         }
         function initMyName() {
             const saved = localStorage.getItem('ekiUserNickname');
@@ -133,18 +131,16 @@
             });
         }
 
-        // --- ボトル操作 ---
         document.getElementById('send-btn').onclick = async () => {
             const input = document.getElementById('message-input');
-            if(!input.value) return;
+            if(!input.value.trim()) return; // 空なら反応しない
             const docRef = await addDoc(collection(db, "bottles"), { 
                 text: input.value, station: currentStation, originStation: currentStation, senderName: myName, createdAt: serverTimestamp() 
             });
             saveHistory('sharedMyBottles', docRef.id, input.value);
-            alert("海に流しました！"); input.value = ""; loadAllHistories();
+            alert("海にボトルを置きました！"); input.value = ""; loadAllHistories();
         };
 
-        // ボトルを拾う（この時は移動UIを表示）
         document.getElementById('pick-btn').onclick = async () => {
             const overlay = document.getElementById('bottle-overlay');
             const content = document.getElementById('bottle-content');
@@ -161,7 +157,6 @@
                 document.getElementById('picked-text').innerText = data.text;
                 document.getElementById('picked-station').innerText = (data.originStation || data.station) + ' にて';
                 
-                // 拾った時は「矢印あり」のUI
                 document.getElementById('station-info-area').innerHTML = `
                     ボトル位置: <span>${data.station}</span><br>
                     ↓<br>
@@ -174,35 +169,34 @@
             } else { empty.style.display = 'block'; }
         };
 
-        // 元の駅に戻す
         document.getElementById('reply-back-btn').onclick = async () => {
             const input = document.getElementById('reply-input');
-            if(!currentBottleId) return;
+            if(!currentBottleId || !input.value.trim()) return; // 空なら反応しない
             const bSnap = await getDoc(doc(db, "bottles", currentBottleId));
             const originalStation = bSnap.data().station;
+            
             await addDoc(collection(db, "replies"), { 
-                parentId: currentBottleId, text: input.value || "（戻しました）", senderName: myName, station: originalStation, createdAt: serverTimestamp() 
+                parentId: currentBottleId, text: input.value, senderName: myName, station: originalStation, createdAt: serverTimestamp() 
             });
             saveHistory('myReplyBottles', currentBottleId, bSnap.data().text);
-            alert(`元の駅(${originalStation})に戻しました。`);
+            alert(`元の駅(${originalStation})にボトルを置きました。`);
             closeModals(); input.value = ""; loadAllHistories();
         };
 
-        // 最寄駅に置く
         document.getElementById('reply-place-btn').onclick = async () => {
             const input = document.getElementById('reply-input');
-            if(!currentBottleId) return;
+            if(!currentBottleId || !input.value.trim()) return; // 空なら反応しない
             const bSnap = await getDoc(doc(db, "bottles", currentBottleId));
+            
             await addDoc(collection(db, "replies"), { 
-                parentId: currentBottleId, text: input.value || "（運びました）", senderName: myName, station: currentStation, createdAt: serverTimestamp() 
+                parentId: currentBottleId, text: input.value, senderName: myName, station: currentStation, createdAt: serverTimestamp() 
             });
             await updateDoc(doc(db, "bottles", currentBottleId), { station: currentStation });
             saveHistory('myReplyBottles', currentBottleId, bSnap.data().text);
-            alert(`${currentStation} に置き直しました！`);
+            alert(`${currentStation} にボトルを置きました！`);
             closeModals(); input.value = ""; loadAllHistories();
         };
 
-        // 再取得アイコン
         document.getElementById('refresh-station-btn').onclick = async () => {
             const targetSpan = document.getElementById('target-station-name');
             if(targetSpan) targetSpan.innerText = "再取得中...";
@@ -210,8 +204,6 @@
             if(targetSpan) targetSpan.innerText = currentStation;
         };
 
-        // --- 履歴・表示管理 ---
-        // 履歴から詳細を見る（この時は「ボトル位置」のみ）
         async function showSpecificBottle(id) {
             const overlay = document.getElementById('bottle-overlay');
             document.getElementById('bottle-content').style.display = 'block';
@@ -224,12 +216,7 @@
                 document.getElementById('picked-sender').innerText = data.senderName;
                 document.getElementById('picked-text').innerText = data.text;
                 document.getElementById('picked-station').innerText = (data.originStation || data.station) + ' にて';
-                
-                // 履歴表示の時は「ボトル位置のみ」のUI
-                document.getElementById('station-info-area').innerHTML = `
-                    ボトル位置: <span>${data.station}</span>
-                `;
-                
+                document.getElementById('station-info-area').innerHTML = `ボトル位置: <span>${data.station}</span>`;
                 loadReplies(id, document.getElementById('reply-list'));
             }
         }
@@ -267,7 +254,6 @@
         window.closeModals = () => document.querySelectorAll('.overlay').forEach(el => el.style.display = 'none');
         window.resetNickname = () => { localStorage.setItem('ekiUserNickname', generateName()); location.reload(); };
         window.resetAll = () => { if(confirm("履歴を含め全て削除しますか？")) { localStorage.clear(); location.reload(); } };
-
         window.onload = () => { initMyName(); getStation(); loadAllHistories(); };
     </script>
 </body>
