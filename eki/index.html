@@ -6,12 +6,12 @@
     <title>Eki Bottle Mail</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍾</text></svg>">
     <style>
-        body { margin: 0; padding: 0; font-family: sans-serif; background: linear-gradient(180deg, #a1c4fd 0%, #c2e9fb 100%); min-height: 100vh; display: flex; flex-direction: column; align-items: center; color: #334d66; padding-bottom: 100px; }
+        body { margin: 0; padding: 0; font-family: sans-serif; background: linear-gradient(180deg, #a1c4fd 0%, #c2e9fb 100%); min-height: 100vh; display: flex; flex-direction: column; align-items: center; color: #334d66; padding-bottom: 120px; }
         .container { width: 90%; max-width: 400px; margin-top: 20px; text-align: center; }
         .user-profile-wrapper { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 20px; }
         .user-profile { font-size: 0.8rem; color: #ffffff; background: rgba(0,0,0,0.1); padding: 5px 15px; border-radius: 20px; display: inline-block; }
         
-        /* 1. トップの自分の名前を紺色に */
+        /* 自分の名前を紺色に */
         #my-name-display { color: #1a2a6c; font-weight: bold; }
 
         .settings-icon { cursor: pointer; font-size: 1.2rem; color: rgba(255,255,255,0.8); transition: transform 0.3s; }
@@ -30,13 +30,26 @@
         .history-title { font-size: 0.9rem; font-weight: bold; color: #667788; margin-bottom: 10px; }
         .history-item { background: rgba(255, 255, 255, 0.5); padding: 12px; border-radius: 15px; margin-bottom: 10px; font-size: 0.85rem; cursor: pointer; }
         .history-meta { font-size: 0.7rem; color: #8899aa; margin-top: 4px; }
-        .btn-pick-up { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: white; border: none; border-radius: 50%; width: 70px; height: 70px; font-size: 40px; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 15px rgba(0,0,0,0.2); cursor: pointer; z-index: 10; }
+
+        /* イラストを使ったボトルを拾うボタン */
+        .btn-pick-up { 
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); 
+            width: 90px; height: 90px; 
+            border: 4px solid white; border-radius: 50%; 
+            background: url('https://files.oaiusercontent.com/file-X9S7W2U5N7D6R6J6G6B6A6') no-repeat center center;
+            background-size: cover;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3); 
+            cursor: pointer; z-index: 10; 
+            padding: 0; transition: transform 0.2s, box-shadow 0.2s;
+            overflow: hidden;
+        }
+        .btn-pick-up:active { transform: translateX(-50%) scale(0.92); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 100; }
         .modal { background: white; padding: 20px; border-radius: 20px; width: 85%; text-align: center; max-width: 350px; max-height: 85vh; overflow-y: auto; }
         .main-message-box { background: #f0f7ff; padding: 15px; border-radius: 15px; margin-bottom: 5px; text-align: left; }
         
-        /* 2. 拾ったボトルの元の送信者（親）が自分の場合の紺色設定 */
+        /* 親メッセージが自分の場合の紺色 */
         #picked-sender { font-size: 0.75rem; color: #5dade2; font-weight: bold; margin-bottom: 5px; }
         #picked-sender.is-me { color: #1a2a6c; }
 
@@ -45,7 +58,6 @@
         .station-divider { border-top: 1px dashed #ccddee; border-bottom: 1px dashed #ccddee; padding: 10px 0; margin: 15px 0; font-size: 0.8rem; color: #8899aa; text-align: center; line-height: 1.6; }
         .station-divider span { color: #334d66; font-weight: bold; }
         
-        /* 3. 返信リスト：自分の名前を紺色に */
         .reply-item { background: #f0f7ff; padding: 10px 12px; border-radius: 12px; font-size: 0.85rem; margin-bottom: 12px; color: #556677; display: flex; flex-direction: column; text-align: left; }
         .reply-sender { font-size: 0.7rem; color: #5dade2; font-weight: bold; margin-bottom: 4px; }
         .reply-item.is-me .reply-sender { color: #1a2a6c; }
@@ -78,7 +90,7 @@
         <div class="history-section"><div class="history-title">📩 返信したボトル</div><div id="my-replies-list"></div></div>
     </div>
 
-    <button id="pick-btn" class="btn-pick-up">🍾</button>
+    <button id="pick-btn" class="btn-pick-up" title="ボトルを拾う"></button>
 
     <div id="bottle-overlay" class="overlay">
         <div class="modal">
@@ -163,16 +175,9 @@
                 const target = snap.docs[Math.floor(Math.random() * snap.size)];
                 currentBottleId = target.id;
                 const data = target.data();
-                
-                // 親メッセージの送信者表示の判定
                 const senderEl = document.getElementById('picked-sender');
                 senderEl.innerText = data.senderName;
-                if(data.senderName === myName) {
-                    senderEl.classList.add('is-me');
-                } else {
-                    senderEl.classList.remove('is-me');
-                }
-
+                if(data.senderName === myName) senderEl.classList.add('is-me'); else senderEl.classList.remove('is-me');
                 document.getElementById('picked-text').innerText = data.text;
                 document.getElementById('picked-station').innerText = (data.originStation || data.station) + ' にて';
                 document.getElementById('station-info-area').innerHTML = `ボトル位置: <span>${data.station}</span><br>↓<br>置く位置: <span id="target-station-name">${currentStation}</span>`;
