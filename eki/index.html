@@ -11,7 +11,7 @@
         .user-profile-wrapper { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 20px; }
         .user-profile { font-size: 0.8rem; color: #ffffff; background: rgba(0,0,0,0.1); padding: 5px 15px; border-radius: 20px; display: inline-block; }
         
-        /* トップの自分の名前を紺色に */
+        /* 1. トップの自分の名前を紺色に */
         #my-name-display { color: #1a2a6c; font-weight: bold; }
 
         .settings-icon { cursor: pointer; font-size: 1.2rem; color: rgba(255,255,255,0.8); transition: transform 0.3s; }
@@ -35,16 +35,20 @@
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 100; }
         .modal { background: white; padding: 20px; border-radius: 20px; width: 85%; text-align: center; max-width: 350px; max-height: 85vh; overflow-y: auto; }
         .main-message-box { background: #f0f7ff; padding: 15px; border-radius: 15px; margin-bottom: 5px; text-align: left; }
+        
+        /* 2. 拾ったボトルの元の送信者（親）が自分の場合の紺色設定 */
         #picked-sender { font-size: 0.75rem; color: #5dade2; font-weight: bold; margin-bottom: 5px; }
+        #picked-sender.is-me { color: #1a2a6c; }
+
         #picked-text { font-size: 1.1rem; line-height: 1.5; margin-bottom: 8px; word-wrap: break-word; }
         #picked-station { font-size: 0.65rem; color: #99aabb; text-align: right; font-style: italic; }
         .station-divider { border-top: 1px dashed #ccddee; border-bottom: 1px dashed #ccddee; padding: 10px 0; margin: 15px 0; font-size: 0.8rem; color: #8899aa; text-align: center; line-height: 1.6; }
         .station-divider span { color: #334d66; font-weight: bold; }
         
-        /* 返信リスト：自分の名前を紺色に */
+        /* 3. 返信リスト：自分の名前を紺色に */
         .reply-item { background: #f0f7ff; padding: 10px 12px; border-radius: 12px; font-size: 0.85rem; margin-bottom: 12px; color: #556677; display: flex; flex-direction: column; text-align: left; }
         .reply-sender { font-size: 0.7rem; color: #5dade2; font-weight: bold; margin-bottom: 4px; }
-        .reply-item.is-me .reply-sender { color: #1a2a6c; } /* 自分の名前だけ紺色 */
+        .reply-item.is-me .reply-sender { color: #1a2a6c; }
 
         .reply-location { font-size: 0.65rem; color: #99aabb; text-align: right; font-style: italic; }
         .reply-input-area { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
@@ -159,7 +163,16 @@
                 const target = snap.docs[Math.floor(Math.random() * snap.size)];
                 currentBottleId = target.id;
                 const data = target.data();
-                document.getElementById('picked-sender').innerText = data.senderName;
+                
+                // 親メッセージの送信者表示の判定
+                const senderEl = document.getElementById('picked-sender');
+                senderEl.innerText = data.senderName;
+                if(data.senderName === myName) {
+                    senderEl.classList.add('is-me');
+                } else {
+                    senderEl.classList.remove('is-me');
+                }
+
                 document.getElementById('picked-text').innerText = data.text;
                 document.getElementById('picked-station').innerText = (data.originStation || data.station) + ' にて';
                 document.getElementById('station-info-area').innerHTML = `ボトル位置: <span>${data.station}</span><br>↓<br>置く位置: <span id="target-station-name">${currentStation}</span>`;
@@ -216,7 +229,25 @@
             }); 
         }
 
-        async function showSpecificBottle(id) { const overlay = document.getElementById('bottle-overlay'); document.getElementById('bottle-content').style.display = 'block'; document.getElementById('empty-message').style.display = 'none'; document.getElementById('reply-form-area').style.display = 'none'; overlay.style.display = 'flex'; const d = await getDoc(doc(db, "bottles", id)); if (d.exists()) { const data = d.data(); document.getElementById('picked-sender').innerText = data.senderName; document.getElementById('picked-text').innerText = data.text; document.getElementById('picked-station').innerText = (data.originStation || data.station) + ' にて'; document.getElementById('station-info-area').innerHTML = `ボトル位置: <span>${data.station}</span>`; loadReplies(id, document.getElementById('reply-list')); } }
+        async function showSpecificBottle(id) { 
+            const overlay = document.getElementById('bottle-overlay'); 
+            document.getElementById('bottle-content').style.display = 'block'; 
+            document.getElementById('empty-message').style.display = 'none'; 
+            document.getElementById('reply-form-area').style.display = 'none'; 
+            overlay.style.display = 'flex'; 
+            const d = await getDoc(doc(db, "bottles", id)); 
+            if (d.exists()) { 
+                const data = d.data(); 
+                const senderEl = document.getElementById('picked-sender');
+                senderEl.innerText = data.senderName;
+                if(data.senderName === myName) senderEl.classList.add('is-me'); else senderEl.classList.remove('is-me');
+                document.getElementById('picked-text').innerText = data.text; 
+                document.getElementById('picked-station').innerText = (data.originStation || data.station) + ' にて'; 
+                document.getElementById('station-info-area').innerHTML = `ボトル位置: <span>${data.station}</span>`; 
+                loadReplies(id, document.getElementById('reply-list')); 
+            } 
+        }
+
         window.openSettings = () => document.getElementById('settings-overlay').style.display = 'flex';
         window.closeModals = () => document.querySelectorAll('.overlay').forEach(el => el.style.display = 'none');
         window.resetNickname = () => { localStorage.setItem('ekiUserNickname', generateName()); location.reload(); };
