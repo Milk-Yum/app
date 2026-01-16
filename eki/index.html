@@ -13,11 +13,8 @@
         body { margin: 0; padding: 0; font-family: sans-serif; background: linear-gradient(180deg, #a1c4fd 0%, #c2e9fb 100%); min-height: 100vh; display: flex; flex-direction: column; align-items: center; color: #334d66; padding-top: calc(20px + var(--sat)); padding-bottom: calc(120px + var(--sab)); }
         .container { width: 90%; max-width: 400px; text-align: center; }
         .user-profile-wrapper { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 20px; }
-        
-        /* ヘッダー：あなたは(白) 名前(紺) です(白) */
         .user-profile { font-size: 0.8rem; color: #ffffff; background: rgba(0,0,0,0.1); padding: 5px 15px; border-radius: 20px; display: inline-block; }
         #my-name-display { color: #1a2a6c; font-weight: bold; }
-        
         .settings-icon { cursor: pointer; font-size: 1.2rem; color: rgba(255,255,255,0.8); }
         h1 { font-size: 1.5rem; color: #ffffff; text-shadow: 1px 1px 4px rgba(0,0,0,0.1); margin-top: 0; }
         .station-box { background: rgba(255, 255, 255, 0.6); padding: 15px; border-radius: 20px; margin-bottom: 20px; font-weight: bold; backdrop-filter: blur(5px); min-height: 20px; }
@@ -138,7 +135,7 @@
             list.forEach(i => {
                 const h = document.createElement('div'); h.className = 'history-item';
                 h.innerHTML = `<div>${i.text}</div><div class="history-meta">${i.date}</div>`;
-                h.onclick = () => showSpecificBottle(i.id, key === 'myReplyBottles'); 
+                h.onclick = () => showSpecificBottle(i.id); 
                 div.appendChild(h);
             });
         }
@@ -212,28 +209,32 @@
             const snap = await getDocs(q);
             if(!snap.empty) {
                 const target = snap.docs[Math.floor(Math.random() * snap.size)];
-                showBottleData(target.id, target.data());
+                // 拾ったときは hideForm = false で強制表示
+                showBottleData(target.id, target.data(), false);
             } else { empty.style.display = 'block'; }
         };
 
-        async function showSpecificBottle(id, isReplyHistory = false) { 
+        // 履歴から開いた場合
+        async function showSpecificBottle(id) { 
             const d = await getDoc(doc(db, "bottles", id)); 
             if (d.exists()) { 
                 document.getElementById('bottle-overlay').style.display = 'flex';
-                showBottleData(id, d.data(), isReplyHistory);
+                // 履歴からのときは hideForm = true で強制非表示
+                showBottleData(id, d.data(), true);
             } 
         }
 
-        function showBottleData(id, data, hideForm = false) {
+        function showBottleData(id, data, hideForm) {
             document.getElementById('bottle-content').style.display = 'block';
             document.getElementById('empty-message').style.display = 'none';
-            const isMyBottle = (data.senderId === myUserId);
-            document.getElementById('reply-form-area').style.display = (isMyBottle || hideForm) ? 'none' : 'flex';
             
-            // ニックネーム色の動的切り替え
+            // hideForm引数に従って表示/非表示を決定（isMyBottleに関わらず）
+            document.getElementById('reply-form-area').style.display = hideForm ? 'none' : 'flex';
+            
+            const isMyBottle = (data.senderId === myUserId);
             const senderEl = document.getElementById('picked-sender');
             senderEl.innerText = data.senderName;
-            senderEl.style.color = isMyBottle ? "#1a2a6c" : "#5dade2"; // 自分なら紺色
+            senderEl.style.color = isMyBottle ? "#1a2a6c" : "#5dade2"; 
             
             document.getElementById('picked-text').innerText = data.text; 
             document.getElementById('picked-station').innerText = (data.originStation || data.station) + ' にて';
@@ -273,7 +274,6 @@
                 const isMyReply = (rd.senderId === myUserId);
                 const d = document.createElement('div');
                 d.style.cssText = "background:#f0f7ff; padding:10px; border-radius:12px; font-size:0.85rem; margin-bottom:10px; text-align:left; display:flex; flex-direction:column;";
-                // 返信一覧でも自分なら名前を紺色に
                 const nameColor = isMyReply ? "#1a2a6c" : "#5dade2";
                 d.innerHTML = `<span style="font-size:0.7rem; color:${nameColor}; font-weight:bold;">${rd.senderName}</span><span>${rd.text}</span><span style="font-size:0.6rem; color:#99aabb; text-align:right;">${rd.station} にて</span>`;
                 listEl.appendChild(d);
