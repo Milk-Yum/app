@@ -89,7 +89,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDoc, getDocs, query, limit, serverTimestamp, updateDoc, increment, doc, where, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDoc, getDocs, query, limit, serverTimestamp, updateDoc, doc, where, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
         const firebaseConfig = { apiKey: "AIzaSyD4-mJxug55N26rxomekf1Tvn9YgToacTY", authDomain: "nakami-88027.firebaseapp.com", projectId: "nakami-88027", storageBucket: "nakami-88027.firebasestorage.app", messagingSenderId: "316064567852", appId: "1:316064567852:web:85642cd678d7b4160b7789" };
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
@@ -135,8 +135,7 @@
                 station: currentStation, 
                 originStation: currentStation, 
                 senderName: myName, 
-                createdAt: serverTimestamp(), 
-                readCount: 0 
+                createdAt: serverTimestamp()
             });
             saveHistory('sharedMyBottles', docRef.id, input.value);
             alert("海に流しました！"); input.value = ""; loadAllHistories();
@@ -147,19 +146,18 @@
             const content = document.getElementById('bottle-content');
             const empty = document.getElementById('empty-message');
             content.style.display = 'none'; empty.style.display = 'none'; overlay.style.display = 'flex';
-            const q = query(collection(db, "bottles"), where("station", "==", currentStation), where("readCount", "<", 11), limit(10));
+            // readCount制限を解除
+            const q = query(collection(db, "bottles"), where("station", "==", currentStation), limit(10));
             const snap = await getDocs(q);
             if(!snap.empty) {
                 const target = snap.docs[Math.floor(Math.random() * snap.size)];
                 currentBottleId = target.id;
                 const data = target.data();
-                await updateDoc(doc(db, "bottles", target.id), { readCount: increment(1) });
                 
-                // 表示更新
                 document.getElementById('picked-sender').innerText = data.senderName;
                 document.getElementById('picked-text').innerText = data.text;
                 document.getElementById('picked-station').innerText = (data.originStation || data.station) + ' にて';
-                document.getElementById('current-station-name').innerText = data.station; // これがボトル位置
+                document.getElementById('current-station-name').innerText = data.station;
                 
                 content.style.display = 'block';
                 document.getElementById('reply-form-area').style.display = 'flex';
@@ -172,7 +170,7 @@
             if(!input.value || !currentBottleId) return;
             const bSnap = await getDoc(doc(db, "bottles", currentBottleId));
             await addDoc(collection(db, "replies"), { parentId: currentBottleId, text: input.value, senderName: myName, station: currentStation, createdAt: serverTimestamp() });
-            await updateDoc(doc(db, "bottles", currentBottleId), { station: currentStation }); // ボトルを最新駅へ移動
+            await updateDoc(doc(db, "bottles", currentBottleId), { station: currentStation });
             saveHistory('myReplyBottles', currentBottleId, bSnap.data().text);
             alert(`${currentStation} から返信を流しました！`); closeModals();
             input.value = ""; loadAllHistories();
@@ -199,12 +197,11 @@
                 document.getElementById('picked-sender').innerText = data.senderName;
                 document.getElementById('picked-text').innerText = data.text;
                 document.getElementById('picked-station').innerText = (data.originStation || data.station) + ' にて';
-                document.getElementById('current-station-name').innerText = data.station; // 履歴から開いた時も最新の場所を表示
+                document.getElementById('current-station-name').innerText = data.station;
                 loadReplies(id, document.getElementById('reply-list'));
             }
         }
 
-        // --- 履歴描画系ロジック（不変） ---
         function saveHistory(key, id, text) {
             let list = JSON.parse(localStorage.getItem(key) || '[]');
             list = list.filter(i => i.id !== id);
