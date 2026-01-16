@@ -66,11 +66,7 @@
                     <div id="picked-station"></div>
                 </div>
                 
-                <div class="station-divider">
-                    ボトル位置: <span id="current-station-name">取得中...</span><br>
-                    ↓<br>
-                    置く位置: <span id="target-station-name">取得中...</span>
-                </div>
+                <div id="station-info-area" class="station-divider"></div>
 
                 <div id="reply-list"></div>
                 
@@ -109,7 +105,7 @@
         
         let currentStation = "どこかの駅", currentBottleId = null, myName = "";
 
-        // --- 初期化 & 地名取得 ---
+        // --- 初期設定・地名取得 ---
         function generateName() {
             const colors = ["茜色","瑠璃色","琥珀色","薄桜色","翡翠色","浅葱色","萌葱色","山吹色","藤色","銀鼠色","漆黒","純白","群青色","若草色","藍色","向日葵色","菫色","珊瑚色","黄金色","空色"];
             const jobs = ["旅人","かもめ","漂流者","駅員","灯台守","月明かり","風来坊","詩人","迷い子","案内人","観測者","夢想家","開拓者","守護者","訪問者","記録係","職人","賢者","踊り子","奏者"];
@@ -148,6 +144,7 @@
             alert("海に流しました！"); input.value = ""; loadAllHistories();
         };
 
+        // ボトルを拾う（この時は移動UIを表示）
         document.getElementById('pick-btn').onclick = async () => {
             const overlay = document.getElementById('bottle-overlay');
             const content = document.getElementById('bottle-content');
@@ -163,8 +160,14 @@
                 document.getElementById('picked-sender').innerText = data.senderName;
                 document.getElementById('picked-text').innerText = data.text;
                 document.getElementById('picked-station').innerText = (data.originStation || data.station) + ' にて';
-                document.getElementById('current-station-name').innerText = data.station;
-                document.getElementById('target-station-name').innerText = currentStation;
+                
+                // 拾った時は「矢印あり」のUI
+                document.getElementById('station-info-area').innerHTML = `
+                    ボトル位置: <span>${data.station}</span><br>
+                    ↓<br>
+                    置く位置: <span id="target-station-name">${currentStation}</span>
+                `;
+                
                 content.style.display = 'block';
                 document.getElementById('reply-form-area').style.display = 'flex';
                 loadReplies(target.id, document.getElementById('reply-list'));
@@ -201,12 +204,14 @@
 
         // 再取得アイコン
         document.getElementById('refresh-station-btn').onclick = async () => {
-            document.getElementById('target-station-name').innerText = "再取得中...";
+            const targetSpan = document.getElementById('target-station-name');
+            if(targetSpan) targetSpan.innerText = "再取得中...";
             await getStation();
-            document.getElementById('target-station-name').innerText = currentStation;
+            if(targetSpan) targetSpan.innerText = currentStation;
         };
 
         // --- 履歴・表示管理 ---
+        // 履歴から詳細を見る（この時は「ボトル位置」のみ）
         async function showSpecificBottle(id) {
             const overlay = document.getElementById('bottle-overlay');
             document.getElementById('bottle-content').style.display = 'block';
@@ -219,11 +224,16 @@
                 document.getElementById('picked-sender').innerText = data.senderName;
                 document.getElementById('picked-text').innerText = data.text;
                 document.getElementById('picked-station').innerText = (data.originStation || data.station) + ' にて';
-                document.getElementById('current-station-name').innerText = data.station;
-                document.getElementById('target-station-name').innerText = "-";
+                
+                // 履歴表示の時は「ボトル位置のみ」のUI
+                document.getElementById('station-info-area').innerHTML = `
+                    ボトル位置: <span>${data.station}</span>
+                `;
+                
                 loadReplies(id, document.getElementById('reply-list'));
             }
         }
+
         function saveHistory(key, id, text) {
             let list = JSON.parse(localStorage.getItem(key) || '[]');
             list = list.filter(i => i.id !== id);
