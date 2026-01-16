@@ -24,9 +24,6 @@
         .btn-pick-up { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: white; border: none; border-radius: 50%; width: 70px; height: 70px; font-size: 40px; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 15px rgba(0,0,0,0.2); cursor: pointer; z-index: 10; }
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 100; }
         .modal { background: white; padding: 20px; border-radius: 20px; width: 85%; text-align: center; max-width: 350px; max-height: 85vh; overflow-y: auto; }
-        .settings-menu { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
-        .btn-action { padding: 12px; border-radius: 15px; border: 1px solid #eee; background: #f9f9f9; cursor: pointer; font-size: 0.9rem; font-weight: bold; color: #555; }
-        .btn-action.danger { color: #e74c3c; border-color: #ffdada; background: #fff5f5; }
         .main-message-box { background: #f0f7ff; padding: 15px; border-radius: 15px; margin-bottom: 5px; text-align: left; }
         #picked-sender { font-size: 0.75rem; color: #5dade2; font-weight: bold; margin-bottom: 5px; }
         #picked-text { font-size: 1.1rem; line-height: 1.5; margin-bottom: 8px; word-wrap: break-word; }
@@ -67,7 +64,7 @@
                     <div id="picked-text"></div>
                     <div id="picked-station"></div>
                 </div>
-                <div class="station-divider">現在の位置: <span id="current-station-name">取得中...</span></div>
+                <div class="station-divider">ボトル位置: <span id="current-station-name">取得中...</span></div>
                 <div id="reply-list"></div>
                 <div class="reply-input-area" id="reply-form-area">
                     <textarea id="reply-input" class="reply-input" placeholder="返信を書く..."></textarea>
@@ -110,7 +107,7 @@
             document.getElementById('my-name-display').innerText = myName;
         }
         window.resetNickname = () => { localStorage.setItem('ekiUserNickname', generateName()); location.reload(); };
-        window.resetAll = () => { if(confirm("全ての履歴と名前が消去されます。よろしいですか？")) { localStorage.clear(); location.reload(); } };
+        window.resetAll = () => { if(confirm("全てリセットしますか？")) { localStorage.clear(); location.reload(); } };
         window.openSettings = () => document.getElementById('settings-overlay').style.display = 'flex';
         window.closeModals = () => document.querySelectorAll('.overlay').forEach(el => el.style.display = 'none');
 
@@ -123,7 +120,6 @@
                         if(data.response.station) {
                             currentStation = `${data.response.station[0].line} ${data.response.station[0].name}駅`;
                             document.querySelector('#station-display span').innerText = currentStation + " 付近";
-                            document.getElementById('current-station-name').innerText = currentStation;
                         }
                     } catch(e) {}
                     resolve();
@@ -134,7 +130,6 @@
         document.getElementById('send-btn').onclick = async () => {
             const input = document.getElementById('message-input');
             if(!input.value) return;
-            // originStationを記録
             const docRef = await addDoc(collection(db, "bottles"), { 
                 text: input.value, 
                 station: currentStation, 
@@ -160,10 +155,11 @@
                 const data = target.data();
                 await updateDoc(doc(db, "bottles", target.id), { readCount: increment(1) });
                 
-                // 元の駅を表示
+                // 表示更新
                 document.getElementById('picked-sender').innerText = data.senderName;
                 document.getElementById('picked-text').innerText = data.text;
                 document.getElementById('picked-station').innerText = (data.originStation || data.station) + ' にて';
+                document.getElementById('current-station-name').innerText = data.station; // これがボトル位置
                 
                 content.style.display = 'block';
                 document.getElementById('reply-form-area').style.display = 'flex';
@@ -176,8 +172,7 @@
             if(!input.value || !currentBottleId) return;
             const bSnap = await getDoc(doc(db, "bottles", currentBottleId));
             await addDoc(collection(db, "replies"), { parentId: currentBottleId, text: input.value, senderName: myName, station: currentStation, createdAt: serverTimestamp() });
-            // originStationは絶対に変更せず、検索用のstation（現在地）のみ更新
-            await updateDoc(doc(db, "bottles", currentBottleId), { station: currentStation });
+            await updateDoc(doc(db, "bottles", currentBottleId), { station: currentStation }); // ボトルを最新駅へ移動
             saveHistory('myReplyBottles', currentBottleId, bSnap.data().text);
             alert(`${currentStation} から返信を流しました！`); closeModals();
             input.value = ""; loadAllHistories();
@@ -192,6 +187,24 @@
             btn.innerText = "最寄駅を再取得して流す";
         };
 
+        async function showSpecificBottle(id) {
+            const overlay = document.getElementById('bottle-overlay');
+            document.getElementById('bottle-content').style.display = 'block';
+            document.getElementById('empty-message').style.display = 'none';
+            document.getElementById('reply-form-area').style.display = 'none';
+            overlay.style.display = 'flex';
+            const d = await getDoc(doc(db, "bottles", id));
+            if (d.exists()) {
+                const data = d.data();
+                document.getElementById('picked-sender').innerText = data.senderName;
+                document.getElementById('picked-text').innerText = data.text;
+                document.getElementById('picked-station').innerText = (data.originStation || data.station) + ' にて';
+                document.getElementById('current-station-name').innerText = data.station; // 履歴から開いた時も最新の場所を表示
+                loadReplies(id, document.getElementById('reply-list'));
+            }
+        }
+
+        // --- 履歴描画系ロジック（不変） ---
         function saveHistory(key, id, text) {
             let list = JSON.parse(localStorage.getItem(key) || '[]');
             list = list.filter(i => i.id !== id);
@@ -219,21 +232,6 @@
                 d.innerHTML = `<span class="reply-sender">${rd.senderName}</span><span class="reply-text">${rd.text}</span><span class="reply-location">${rd.station} にて</span>`;
                 listElement.appendChild(d);
             });
-        }
-        async function showSpecificBottle(id) {
-            const overlay = document.getElementById('bottle-overlay');
-            document.getElementById('bottle-content').style.display = 'block';
-            document.getElementById('empty-message').style.display = 'none';
-            document.getElementById('reply-form-area').style.display = 'none';
-            overlay.style.display = 'flex';
-            const d = await getDoc(doc(db, "bottles", id));
-            if (d.exists()) {
-                const data = d.data();
-                document.getElementById('picked-sender').innerText = data.senderName;
-                document.getElementById('picked-text').innerText = data.text;
-                document.getElementById('picked-station').innerText = (data.originStation || data.station) + ' にて';
-                loadReplies(id, document.getElementById('reply-list'));
-            }
         }
         window.onload = () => { initMyName(); getStation(); loadAllHistories(); };
     </script>
