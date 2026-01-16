@@ -155,21 +155,6 @@
             document.getElementById('my-name-display').innerText = myName;
             document.getElementById('display-user-id').innerText = myUserId;
             renderAllLocalHistories();
-            syncHistoryFromCloud();
-        }
-
-        async function syncHistoryFromCloud() {
-            try {
-                const qB = query(collection(db, "bottles"), where("senderId", "==", myUserId), orderBy("createdAt", "desc"), limit(10));
-                const snapB = await getDocs(qB);
-                snapB.forEach(d => saveToLocalHistory('sharedMyBottles', d.id, d.data().text));
-                const qR = query(collection(db, "replies"), where("senderId", "==", myUserId), orderBy("createdAt", "desc"), limit(10));
-                const snapR = await getDocs(qR);
-                for(let r of snapR.docs) {
-                    const b = await getDoc(doc(db, "bottles", r.data().parentId));
-                    if(b.exists()) saveToLocalHistory('myReplyBottles', b.id, b.data().text);
-                }
-            } catch(e) {}
         }
 
         async function getStation(updateUI = true) {
@@ -209,17 +194,14 @@
             const snap = await getDocs(q);
             if(!snap.empty) {
                 const target = snap.docs[Math.floor(Math.random() * snap.size)];
-                // 拾ったときは hideForm = false で強制表示
                 showBottleData(target.id, target.data(), false);
             } else { empty.style.display = 'block'; }
         };
 
-        // 履歴から開いた場合
         async function showSpecificBottle(id) { 
             const d = await getDoc(doc(db, "bottles", id)); 
             if (d.exists()) { 
                 document.getElementById('bottle-overlay').style.display = 'flex';
-                // 履歴からのときは hideForm = true で強制非表示
                 showBottleData(id, d.data(), true);
             } 
         }
@@ -227,15 +209,11 @@
         function showBottleData(id, data, hideForm) {
             document.getElementById('bottle-content').style.display = 'block';
             document.getElementById('empty-message').style.display = 'none';
-            
-            // hideForm引数に従って表示/非表示を決定（isMyBottleに関わらず）
             document.getElementById('reply-form-area').style.display = hideForm ? 'none' : 'flex';
-            
             const isMyBottle = (data.senderId === myUserId);
             const senderEl = document.getElementById('picked-sender');
             senderEl.innerText = data.senderName;
             senderEl.style.color = isMyBottle ? "#1a2a6c" : "#5dade2"; 
-            
             document.getElementById('picked-text').innerText = data.text; 
             document.getElementById('picked-station').innerText = (data.originStation || data.station) + ' にて';
             document.getElementById('station-info-area').innerHTML = `ボトル位置: <span>${data.station}</span>`;
@@ -282,15 +260,37 @@
 
         window.openSettings = () => document.getElementById('settings-overlay').style.display = 'flex';
         window.closeModals = () => document.querySelectorAll('.overlay').forEach(el => el.style.display = 'none');
-        window.copyMyId = () => { navigator.clipboard.writeText(myUserId); alert("コードをコピーしました。"); };
+        
+        // 修正：コピー時に今の履歴をクラウドへ保存
+        window.copyMyId = async () => {
+            const myBottles = localStorage.getItem('sharedMyBottles');
+            const myReplies = localStorage.getItem('myReplyBottles');
+            await updateDoc(doc(db, "users", myUserId), {
+                historyBackup: { myBottles, myReplies }
+            });
+            navigator.clipboard.writeText(myUserId);
+            alert("履歴のバックアップとコードのコピーが完了しました！");
+        };
+
         window.resetNickname = async () => { const n = prompt("新しい名前:", myName); if(n) { myName = n; localStorage.setItem('ekiUserNickname', n); await updateDoc(doc(db, "users", myUserId), { nickname: n }); location.reload(); } };
         window.resetAll = () => { if(confirm("リセットしますか？")) { localStorage.clear(); location.reload(); } };
+        
+        // 修正：復元時にクラウドから履歴を読み込む
         window.importUser = async () => {
             const id = document.getElementById('import-id-input').value.trim();
             const uDoc = await getDoc(doc(db, "users", id));
             if(uDoc.exists()) {
+                const data = uDoc.data();
                 localStorage.clear();
-                localStorage.setItem('ekiUserId', id); localStorage.setItem('ekiUserNickname', uDoc.data().nickname); location.reload();
+                localStorage.setItem('ekiUserId', id);
+                localStorage.setItem('ekiUserNickname', data.nickname);
+                // バックアップがあれば復元
+                if(data.historyBackup) {
+                    if(data.historyBackup.myBottles) localStorage.setItem('sharedMyBottles', data.historyBackup.myBottles);
+                    if(data.historyBackup.myReplies) localStorage.setItem('myReplyBottles', data.historyBackup.myReplies);
+                }
+                alert("復元しました。");
+                location.reload();
             } else { alert("無効なコードです。"); }
         };
         window.onload = async () => { await initUser(); getStation(); };
