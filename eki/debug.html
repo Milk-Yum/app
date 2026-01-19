@@ -19,19 +19,23 @@
         .settings-icon { cursor: pointer; font-size: 1.2rem; color: rgba(255,255,255,0.8); }
         h1 { font-size: 1.5rem; color: #ffffff; text-shadow: 1px 1px 4px rgba(0,0,0,0.2); margin-top: 0; }
         
-        .station-box { background: rgba(255, 255, 255, 0.2); padding: 15px; border-radius: 20px; margin-bottom: 20px; font-weight: bold; backdrop-filter: blur(5px); min-height: 20px; border: 2px dashed #f1c40f; cursor: pointer; }
-        .station-box:active { background: rgba(255, 255, 255, 0.4); }
+        /* デバッグ用：タップ可能であることを強調 */
+        .station-box { background: rgba(255, 255, 255, 0.2); padding: 15px; border-radius: 20px; margin-bottom: 20px; font-weight: bold; backdrop-filter: blur(5px); min-height: 20px; border: 2px dashed #f1c40f; cursor: pointer; transition: 0.2s; }
+        .station-box:active { background: rgba(255, 255, 255, 0.4); transform: scale(0.98); }
 
         .bottle-card { background: #ffffff; padding: 25px; border-radius: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); display: flex; flex-direction: column; gap: 15px; margin-bottom: 30px; color: #334d66; }
         textarea { width: 100%; height: 100px; border: 1px solid #e0e7ff; border-radius: 15px; padding: 12px; box-sizing: border-box; font-size: 16px; background: #f9fbff; -webkit-appearance: none; resize: none; outline: none; }
         .action-area { display: flex; gap: 8px; }
         .btn-send { background: #5dade2; color: white; border: none; padding: 15px; border-radius: 50px; font-size: 1rem; font-weight: bold; cursor: pointer; flex: 1; }
         .btn-refresh { background: #5dade2; border: none; border-radius: 15px; width: 50px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex: none; }
+        
         .history-section { width: 100%; text-align: left; margin-top: 20px; }
         .history-title { font-size: 0.9rem; font-weight: bold; color: #ffffff; margin-bottom: 10px; }
         .history-item { background: rgba(255, 255, 255, 0.2); padding: 12px; border-radius: 15px; margin-bottom: 10px; font-size: 0.85rem; cursor: pointer; }
         .history-meta { font-size: 0.7rem; color: #eee; margin-top: 4px; }
+        
         .btn-pick-up { position: fixed; bottom: calc(20px + var(--sab)); left: 50%; transform: translateX(-50%); width: 95px; height: 95px; border: 4px solid white; border-radius: 50%; background: url('bottle307.png') no-repeat center center; background-size: cover; box-shadow: 0 10px 30px rgba(0,0,0,0.3); cursor: pointer; z-index: 10; outline: none; }
+        
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 100; color: #334d66; }
         .modal { background: white; padding: 20px; border-radius: 20px; width: 85%; text-align: center; max-width: 350px; max-height: 85vh; overflow-y: auto; }
         .main-message-box { background: #f0f7ff; padding: 15px; border-radius: 15px; margin-bottom: 5px; text-align: left; }
@@ -45,17 +49,19 @@
     </style>
 </head>
 <body>
-    <div class="debug-badge">DEBUG MODE (Location Fake Enabled)</div>
+    <div class="debug-badge">DEBUG MODE (Station Faking Enabled)</div>
     <div class="container">
         <div class="user-profile-wrapper">
             <div class="user-profile">あなたは <span id="my-name-display">...</span> です</div>
             <div class="settings-icon" onclick="openSettings()">⚙️</div>
         </div>
         <h1>Eki Bottle Mail</h1>
+        
         <div id="station-display" class="station-box" onclick="fakeMainStation()">
             <span id="current-station-text">駅を探しています...</span>
-            <div style="font-size:0.6rem; opacity:0.8; margin-top:5px;">[タップして駅名を偽装]</div>
+            <div style="font-size:0.6rem; opacity:0.8; margin-top:5px;">[タップして現在地を偽装入力]</div>
         </div>
+
         <div class="bottle-card">
             <textarea id="message-input" placeholder="今の駅にメッセージを置く..."></textarea>
             <div class="action-area">
@@ -127,11 +133,11 @@
         let currentStation = "どこかの駅", myName = "", myUserId = "";
         let isFaked = false;
 
-        // --- DEBUG FUNCTIONS ---
+        // --- DEBUG FUNCTIONS (システム変数も書き換えるように修正) ---
         window.fakeMainStation = () => {
             const newName = prompt("【DEBUG】新しい現在地を入力してください", currentStation);
             if (newName) {
-                currentStation = newName;
+                currentStation = newName; // 内部変数を直接更新
                 isFaked = true;
                 document.getElementById('current-station-text').innerText = currentStation + " [偽装中]";
             }
@@ -141,7 +147,7 @@
             if (window.isFromHistory) return;
             const newName = prompt("【DEBUG】ボトルを置く位置を偽装しますか？", currentStation);
             if (newName) {
-                currentStation = newName;
+                currentStation = newName; // 内部変数を直接更新
                 isFaked = true;
                 document.getElementById('current-station-text').innerText = currentStation + " [偽装中]";
                 updateStationInfoDisplay(window.lastPickedData.station, false);
@@ -222,6 +228,7 @@
             const input = document.getElementById('message-input');
             if(!input.value.trim()) return;
             const text = input.value;
+            // 偽装したcurrentStationがここに入ります
             const docRef = await addDoc(collection(db, "bottles"), { 
                 text: text, station: currentStation, originStation: currentStation, 
                 senderId: myUserId, senderName: myName, createdAt: serverTimestamp() 
@@ -236,6 +243,8 @@
             const content = document.getElementById('bottle-content');
             const empty = document.getElementById('empty-message');
             content.style.display = 'none'; empty.style.display = 'none'; overlay.style.display = 'flex';
+            
+            // 偽装したcurrentStationを使って検索します
             const q = query(collection(db, "bottles"), where("station", "==", currentStation), limit(15));
             const snap = await getDocs(q);
             if(!snap.empty) {
@@ -339,7 +348,7 @@
             if(uDoc.exists()) { localStorage.setItem('ekiUserId', id); location.reload(); }
         };
 
-        window.onload = async () => { await initUser(); getStation(); };
+        window.onload = async () => { await initUser(); await getStation(); };
     </script>
 </body>
 </html>
