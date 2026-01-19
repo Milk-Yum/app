@@ -19,7 +19,6 @@
         .settings-icon { cursor: pointer; font-size: 1.2rem; color: rgba(255,255,255,0.8); }
         h1 { font-size: 1.5rem; color: #ffffff; text-shadow: 1px 1px 4px rgba(0,0,0,0.2); margin-top: 0; }
         
-        /* タップ可能であることを示すスタイル */
         .station-box { background: rgba(255, 255, 255, 0.2); padding: 15px; border-radius: 20px; margin-bottom: 20px; font-weight: bold; backdrop-filter: blur(5px); min-height: 20px; border: 2px dashed #f1c40f; cursor: pointer; }
         .station-box:active { background: rgba(255, 255, 255, 0.4); }
 
@@ -37,9 +36,7 @@
         .modal { background: white; padding: 20px; border-radius: 20px; width: 85%; text-align: center; max-width: 350px; max-height: 85vh; overflow-y: auto; }
         .main-message-box { background: #f0f7ff; padding: 15px; border-radius: 15px; margin-bottom: 5px; text-align: left; }
         
-        /* デバッグ用タップ可能エリア */
         #station-info-area { padding: 10px 0; margin: 15px 0; font-size: 0.8rem; color: #8899aa; border-top: 1px dashed #ddd; border-bottom: 1px dashed #ddd; line-height: 1.6; cursor: pointer; }
-        #station-info-area:active { background: #f0f0f0; }
         .debug-target { color: #e74c3c; font-weight: bold; text-decoration: underline; }
 
         .btn-close { margin-top: 20px; background: #eee; border: none; padding: 10px 20px; border-radius: 20px; width: 100%; cursor: pointer; }
@@ -83,7 +80,6 @@
                     <div id="picked-station" style="font-size: 0.65rem; color: #99aabb; text-align: right;"></div>
                 </div>
                 <div id="station-info-area" onclick="fakeBottlePlaceStation()"></div>
-                
                 <div id="reply-list"></div>
                 <div class="reply-input-area" id="reply-form-area" style="display:flex; flex-direction:column; gap:10px; margin-top:15px;">
                     <textarea id="reply-input" placeholder="返信を書く..." style="height:60px; font-size:14px; border:1px solid #eee; border-radius:10px; padding:8px;"></textarea>
@@ -101,6 +97,25 @@
         </div>
     </div>
 
+    <div id="settings-overlay" class="overlay">
+        <div class="modal">
+            <h2 style="font-size: 1.1rem; margin-top:0;">設定</h2>
+            <div class="transfer-box">
+                <small style="color:#8899aa;">引き継ぎコード</small>
+                <span class="transfer-id" id="display-user-id">----</span>
+                <button id="copy-id-btn" style="font-size:0.7rem; width:100%; border:1px solid #5dade2; background:none; color:#5dade2; border-radius:5px; padding:5px; cursor:pointer;" onclick="copyMyId(event)">コードをコピー</button>
+            </div>
+            <div class="transfer-box">
+                <small style="color:#8899aa;">他端末から復元</small>
+                <input type="text" id="import-id-input" placeholder="コードを入力" style="width:100%; padding:8px; box-sizing:border-box; border-radius:8px; border:1px solid #ddd; margin-top:5px;">
+                <button class="btn-send" style="margin-top:8px; padding:10px; font-size:0.8rem; width:100%;" onclick="importUser()">復元を実行</button>
+            </div>
+            <button class="btn-close" style="background:#5dade2; color:white; margin-bottom:10px;" onclick="resetNickname()">名前だけ変更する</button>
+            <button class="btn-close" style="background:#e74c3c; color:white;" onclick="resetAll()">全データをリセット</button>
+            <button onclick="closeModals()" class="btn-close">閉じる</button>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc, getDoc, getDocs, query, limit, serverTimestamp, updateDoc, doc, where, orderBy, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -110,7 +125,7 @@
         const db = getFirestore(app);
         
         let currentStation = "どこかの駅", myName = "", myUserId = "";
-        let isFaked = false; // 偽装モードフラグ
+        let isFaked = false;
 
         // --- DEBUG FUNCTIONS ---
         window.fakeMainStation = () => {
@@ -119,12 +134,10 @@
                 currentStation = newName;
                 isFaked = true;
                 document.getElementById('current-station-text').innerText = currentStation + " [偽装中]";
-                console.log("Debug: Location faked to " + currentStation);
             }
         };
 
         window.fakeBottlePlaceStation = () => {
-            // 拾った画面での「置く位置」の偽装
             if (window.isFromHistory) return;
             const newName = prompt("【DEBUG】ボトルを置く位置を偽装しますか？", currentStation);
             if (newName) {
@@ -134,7 +147,6 @@
                 updateStationInfoDisplay(window.lastPickedData.station, false);
             }
         };
-        // -----------------------
 
         function generateId() { return Math.random().toString(36).substring(2, 6).toUpperCase() + "-" + Math.random().toString(36).substring(2, 6).toUpperCase(); }
         function generateName() { const colors = ["茜色","瑠璃色","琥珀色","翡翠色","浅葱色","藤色","銀鼠色","群青色"]; const jobs = ["旅人","かもめ","漂流者","灯台守","詩人","奏者"]; return colors[Math.floor(Math.random()*colors.length)] + "の" + jobs[Math.floor(Math.random()*jobs.length)] + "さん"; }
@@ -177,15 +189,13 @@
                 else myName = localStorage.getItem('ekiUserNickname') || generateName();
             }
             document.getElementById('my-name-display').innerText = myName;
+            document.getElementById('display-user-id').innerText = myUserId;
             renderAllLocalHistories();
         }
 
         async function getStation(updateUI = true) {
-            // 偽装中かつ通常の更新ボタン以外からの呼び出し（起動時など）はスキップ可能にする
             if(isFaked && !updateUI) return; 
-
             if(updateUI) document.querySelector('#current-station-text').innerText = "駅を探しています...";
-            
             return new Promise((resolve) => {
                 navigator.geolocation.getCurrentPosition(async (pos) => {
                     const url = `https://express.heartrails.com/api/json?method=getStations&x=${pos.coords.longitude}&y=${pos.coords.latitude}`;
@@ -193,7 +203,7 @@
                         const res = await fetch(url); const data = await res.json();
                         if(data.response.station) {
                             currentStation = `${data.response.station[0].line} ${data.response.station[0].name}駅`;
-                            isFaked = false; // GPS取得成功で偽装解除
+                            isFaked = false;
                             if(updateUI) document.querySelector('#current-station-text').innerText = currentStation + " 付近";
                         }
                     } catch(e) {}
@@ -262,11 +272,9 @@
             document.getElementById('bottle-content').style.display = 'block';
             document.getElementById('empty-message').style.display = 'none';
             document.getElementById('reply-form-area').style.display = hideForm ? 'none' : 'flex';
-            
             const infoArea = document.getElementById('station-info-area');
             infoArea.style.display = 'block';
             updateStationInfoDisplay(data.station, window.isFromHistory);
-
             const isMyBottle = (data.senderId === myUserId);
             const senderEl = document.getElementById('picked-sender');
             senderEl.innerText = data.senderName;
@@ -312,7 +320,25 @@
             });
         }
 
+        window.openSettings = () => document.getElementById('settings-overlay').style.display = 'flex';
         window.closeModals = () => document.querySelectorAll('.overlay').forEach(el => el.style.display = 'none');
+        
+        window.copyMyId = async (event) => {
+            const btn = event.currentTarget;
+            const originalText = btn.innerText;
+            try { await navigator.clipboard.writeText(myUserId); btn.innerText = "コピー完了！"; } 
+            catch (err) { btn.innerText = "失敗しました"; }
+            setTimeout(() => { btn.innerText = originalText; }, 2000);
+        };
+
+        window.resetNickname = async () => { const n = prompt("新しい名前:", myName); if(n) { myName = n; localStorage.setItem('ekiUserNickname', n); await updateDoc(doc(db, "users", myUserId), { nickname: n }); location.reload(); } };
+        window.resetAll = () => { if(confirm("リセットしますか？")) { localStorage.clear(); location.reload(); } };
+        window.importUser = async () => {
+            const id = document.getElementById('import-id-input').value.trim();
+            const uDoc = await getDoc(doc(db, "users", id));
+            if(uDoc.exists()) { localStorage.setItem('ekiUserId', id); location.reload(); }
+        };
+
         window.onload = async () => { await initUser(); getStation(); };
     </script>
 </body>
