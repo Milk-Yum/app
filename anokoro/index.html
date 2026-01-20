@@ -1,1 +1,86 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>あの頃のヒーロー - anokoro</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding: 20px; background: #f0f2f5; }
+        .card { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); max-width: 400px; margin: 20px auto; }
+        .slider-container { margin: 30px 0; }
+        input[type="range"] { width: 80%; cursor: pointer; }
+        .result-list { list-style: none; padding: 0; }
+        .result-item { padding: 10px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; }
+        .category { font-size: 0.8em; color: #666; background: #eee; padding: 2px 6px; border-radius: 4px; }
+    </style>
+</head>
+<body>
 
+    <h1>あの頃のヒーロー</h1>
+
+    <div class="card">
+        <label>あなたの誕生年: </label>
+        <input type="number" id="birthYear" value="1995" min="1950" max="2025" style="width: 80px;"> 年
+    </div>
+
+    <div class="slider-container">
+        <h2 id="ageDisplay">5 歳のころ</h2>
+        <input type="range" id="ageSlider" min="3" max="15" value="5">
+        <p id="yearDisplay">西暦 2000 年</p>
+    </div>
+
+    <div class="card">
+        <ul id="itemList" class="result-list">
+            </ul>
+    </div>
+
+    <script>
+        let masterpieceData = {};
+
+        // 1. JSONデータの読み込み
+        fetch('data.json')
+            .then(response => response.json())
+            .then(data => {
+                masterpieceData = data;
+                updateDisplay(); // 初期表示
+            });
+
+        const birthYearInput = document.getElementById('birthYear');
+        const ageSlider = document.getElementById('ageSlider');
+        const ageDisplay = document.getElementById('ageDisplay');
+        const yearDisplay = document.getElementById('yearDisplay');
+        const itemList = document.getElementById('itemList');
+
+        // 2. 表示を更新する関数
+        function updateDisplay() {
+            const birthYear = parseInt(birthYearInput.value);
+            const age = parseInt(ageSlider.value);
+            const targetYear = birthYear + age;
+
+            // 文字書き換え
+            ageDisplay.innerText = `${age} 歳のころ`;
+            yearDisplay.innerText = `西暦 ${targetYear} 年`;
+
+            // リストクリア
+            itemList.innerHTML = '';
+
+            // データ抽出と表示
+            const hits = masterpieceData[targetYear];
+            if (hits) {
+                hits.forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = 'result-item';
+                    li.innerHTML = `<span>${item.title}</span><span class="category">${item.category}</span>`;
+                    itemList.appendChild(li);
+                });
+            } else {
+                itemList.innerHTML = '<p>データがありません（準備中）</p>';
+            }
+        }
+
+        // 3. イベント設定
+        ageSlider.addEventListener('input', updateDisplay);
+        birthYearInput.addEventListener('change', updateDisplay);
+    </script>
+</body>
+</html>
