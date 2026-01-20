@@ -10,19 +10,17 @@
             --rider-color: #2ed573; 
             --ultra-color: #1e90ff; 
             --metal-color: #ced4da;
-            --bg-base: #1a1a1a; /* 背景をダークにして質感をアップ */
+            --bg-base: #1a1a1a;
         }
 
         body { 
             font-family: 'Segoe UI', sans-serif; 
             background-color: var(--bg-base);
-            background-image: linear-gradient(135deg, rgba(0,0,0,0.8) 0%, rgba(40,40,40,0.8) 100%);
             margin: 0; padding: 20px; color: #fff;
             transition: background 0.5s ease;
             min-height: 100vh;
         }
 
-        /* カテゴリーごとの背景雰囲気 */
         body.戦隊 { background-color: #4a0000; }
         body.仮面ライダー { background-color: #002b00; }
         body.ウルトラマン { background-color: #001a33; }
@@ -30,67 +28,55 @@
 
         .container { max-width: 500px; margin: 0 auto; }
 
-        /* タブデザイン */
         .tabs { display: flex; gap: 8px; margin-bottom: 25px; overflow-x: auto; padding: 5px; }
         .tab-btn { 
             flex: 1; padding: 14px 5px; border: none; border-radius: 12px; 
             background: rgba(255,255,255,0.1); color: #aaa;
-            cursor: pointer; font-weight: bold; font-size: 0.9rem; transition: 0.3s;
+            cursor: pointer; font-weight: bold; font-size: 0.8rem; transition: 0.3s;
             backdrop-filter: blur(5px);
         }
-        .tab-btn.active { color: #fff; transform: translateY(-2px); box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .tab-btn.active { color: #fff; transform: translateY(-2px); }
         .tab-btn.active[data-cat="戦隊"] { background: var(--sentai-color); }
         .tab-btn.active[data-cat="仮面ライダー"] { background: var(--rider-color); }
         .tab-btn.active[data-cat="ウルトラマン"] { background: var(--ultra-color); }
         .tab-btn.active[data-cat="メタルヒーロー"] { background: var(--metal-color); color: #333; }
 
-        /* 入力エリアのカード */
         .card { 
             background: rgba(255,255,255,0.05); padding: 25px; border-radius: 20px; 
             box-shadow: 0 8px 32px rgba(0,0,0,0.3); margin-bottom: 25px;
             backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1);
         }
         
+        /* 誕生日と現在年齢のレイアウト */
+        .birth-row { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
         input[type="date"] { 
-            width: 100%; padding: 12px; border-radius: 10px; border: none; 
-            background: rgba(0,0,0,0.3); color: #fff; font-size: 1.1rem; margin-bottom: 20px;
+            flex: 1; padding: 12px; border-radius: 10px; border: none; 
+            background: rgba(0,0,0,0.3); color: #fff; font-size: 1rem;
+        }
+        .current-age-badge {
+            background: rgba(255,255,255,0.2); padding: 10px 15px; border-radius: 10px;
+            font-size: 0.8rem; font-weight: bold; color: #eee; white-space: nowrap;
+            border: 1px solid rgba(255,255,255,0.1);
         }
         
         .age-badge { 
             display: inline-block; padding: 8px 30px; border-radius: 30px; 
             font-size: 1.6rem; font-weight: 900; margin-bottom: 10px;
-            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
         }
 
-        /* メイン表示エリア */
         .display-card { 
             background: rgba(0,0,0,0.4); padding: 40px 25px; border-radius: 25px; 
             border: 2px solid rgba(255,255,255,0.05); min-height: 280px;
             display: flex; flex-direction: column; justify-content: space-between;
-            position: relative; overflow: hidden;
         }
 
-        .prev-item, .next-item { font-size: 0.9rem; color: #888; font-weight: bold; }
-        .prev-item { text-align: left; }
-        .next-item { text-align: right; }
+        .prev-item, .next-item { font-size: 0.9rem; color: #888; font-weight: bold; min-height: 1.2em; }
+        .current-item { text-align: center; }
+        .current-item .title { font-size: 2.2rem; font-weight: 900; line-height: 1.2; margin: 15px 0; display: block; }
+        .current-item .period { font-size: 0.85rem; color: #aaa; }
 
-        .current-item { text-align: center; z-index: 1; }
-        .current-item .title { 
-            font-size: 2.2rem; font-weight: 900; line-height: 1.2; 
-            margin: 15px 0; display: block;
-            filter: drop-shadow(0 0 15px rgba(255,255,255,0.3));
-        }
-        .current-item .period { font-size: 0.85rem; color: #aaa; letter-spacing: 1px; }
-
-        /* スライダーカスタム */
-        input[type="range"] { 
-            -webkit-appearance: none; width: 100%; height: 10px; border-radius: 5px; 
-            background: rgba(255,255,255,0.1); outline: none; margin-top: 20px;
-        }
-        input[type="range"]::-webkit-slider-thumb {
-            -webkit-appearance: none; width: 25px; height: 25px; border-radius: 50%;
-            background: #fff; cursor: pointer; box-shadow: 0 0 10px rgba(0,0,0,0.5);
-        }
+        input[type="range"] { -webkit-appearance: none; width: 100%; height: 10px; border-radius: 5px; background: rgba(255,255,255,0.1); outline: none; margin-top: 20px; }
+        input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 25px; height: 25px; border-radius: 50%; background: #fff; cursor: pointer; }
     </style>
 </head>
 <body class="戦隊">
@@ -104,14 +90,18 @@
     </div>
 
     <div class="card" style="text-align:center;">
-        <input type="date" id="birthDate" value="1995-01-01">
+        <label style="display:block; text-align:left; font-size:0.75rem; color:#aaa; margin-bottom:5px;">誕生日設定</label>
+        <div class="birth-row">
+            <input type="date" id="birthDate" value="1995-01-01">
+            <div id="currentAgeDisplay" class="current-age-badge">現在 -- 歳</div>
+        </div>
+        
         <div id="ageDisplay" class="age-badge">5 歳のころ</div>
         <p id="dateDisplay" style="margin:5px 0 20px; font-weight: bold; color: #ddd;">2000年1月1日</p>
-        <input type="range" id="ageSlider" min="0" max="30" value="5">
+        <input type="range" id="ageSlider" min="0" max="50" value="5">
     </div>
 
-    <div class="display-card" id="displayArea">
-        </div>
+    <div class="display-card" id="displayArea"></div>
 </div>
 
 <script>
@@ -124,9 +114,29 @@
         updateDisplay();
     }
 
+    // 現在の満年齢を計算する関数
+    function calculateCurrentAge(birthDate) {
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        const m = today.getMonth() - birthDate.getMonth();
+        if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+        }
+        return age;
+    }
+
     function updateDisplay() {
-        const birthDate = new Date(document.getElementById('birthDate').value);
+        const birthDateVal = document.getElementById('birthDate').value;
+        if (!birthDateVal) return;
+
+        const birthDate = new Date(birthDateVal);
         const age = parseInt(document.getElementById('ageSlider').value);
+        
+        // 1. 現在の年齢を計算して表示
+        const currentAge = calculateCurrentAge(birthDate);
+        document.getElementById('currentAgeDisplay').innerText = `現在 ${currentAge} 歳`;
+
+        // 2. 「あの頃」の日付を計算
         const targetDate = new Date(birthDate);
         targetDate.setFullYear(birthDate.getFullYear() + age);
         
@@ -176,7 +186,7 @@
             document.querySelector('.tab-btn.active').classList.remove('active');
             e.target.classList.add('active');
             currentCategory = e.target.dataset.cat;
-            document.body.className = currentCategory; // 背景色切り替え
+            document.body.className = currentCategory;
             updateDisplay();
         });
     });
