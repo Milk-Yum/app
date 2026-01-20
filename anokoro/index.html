@@ -3,108 +3,149 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>あの頃の戦隊 - anokoro</title>
+    <title>あの頃のヒーロー - anokoro</title>
     <style>
-        :root { --sentai-color: #e67e22; --bg-color: #f9f9f9; }
-        body { font-family: "Helvetica Neue", Arial, sans-serif; background: var(--bg-color); padding: 20px; }
+        :root { --sentai-color: #e67e22; --bg-color: #f0f2f5; --text-muted: #999; }
+        body { font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif; background: var(--bg-color); margin: 0; padding: 20px; color: #333; }
         .container { max-width: 500px; margin: 0 auto; }
-        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 20px; }
         
-        /* 3段表示エリア */
-        .focus-area { display: flex; flex-direction: column; gap: 15px; padding: 20px 0; }
+        /* 入力カード */
+        .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); margin-bottom: 20px; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; font-size: 0.8rem; font-weight: bold; color: #666; margin-bottom: 5px; }
+        input[type="date"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
         
-        .prev-item { text-align: left; font-size: 0.9rem; color: #888; border-bottom: 1px dashed #ddd; padding-bottom: 5px; }
-        .current-item { text-align: center; padding: 20px 0; }
-        .current-item .title { font-size: 2rem; font-weight: bold; color: var(--sentai-color); display: block; line-height: 1.2; }
-        .current-item .period { font-size: 0.8rem; color: #666; margin-top: 8px; display: block; }
-        .next-item { text-align: right; font-size: 0.9rem; color: #888; border-top: 1px dashed #ddd; padding-top: 5px; }
+        /* スライダー */
+        .slider-section { text-align: center; padding-top: 10px; }
+        .age-badge { display: inline-block; background: var(--sentai-color); color: white; padding: 5px 20px; border-radius: 20px; font-size: 1.4rem; font-weight: bold; margin-bottom: 5px; }
+        .target-date { font-size: 1rem; color: #666; margin-bottom: 15px; }
+        input[type="range"] { width: 100%; cursor: pointer; height: 8px; border-radius: 5px; background: #ddd; outline: none; }
 
-        input[type="date"], input[type="range"] { width: 100%; margin-top: 10px; }
-        .label-text { font-weight: bold; font-size: 0.9rem; color: #555; }
-        .age-badge { font-size: 1.5rem; color: var(--sentai-color); font-weight: bold; }
+        /* 3段表示エリア */
+        .display-card { background: white; padding: 30px 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); min-height: 200px; display: flex; flex-direction: column; justify-content: space-between; gap: 20px; }
+        
+        .prev-item { text-align: left; font-size: 0.9rem; color: var(--text-muted); border-bottom: 1px dashed #eee; padding-bottom: 8px; }
+        .current-item { text-align: center; padding: 10px 0; }
+        .current-item .title { font-size: 1.8rem; font-weight: bold; color: var(--sentai-color); display: block; line-height: 1.3; }
+        .current-item .period { font-size: 0.8rem; color: var(--text-muted); margin-top: 10px; display: block; }
+        .next-item { text-align: right; font-size: 0.9rem; color: var(--text-muted); border-top: 1px dashed #eee; padding-top: 8px; }
+
+        .none-title { color: #ccc !important; font-style: italic; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div class="card">
-        <label class="label-text">誕生日:</label>
-        <input type="date" id="birthDate" value="1995-01-01">
+        <div class="input-group">
+            <label>誕生日</label>
+            <input type="date" id="birthDate" value="1995-01-01">
+        </div>
         
-        <div style="text-align:center; margin-top: 20px;">
+        <div class="slider-section">
             <span id="ageDisplay" class="age-badge">5 歳のころ</span>
-            <input type="range" id="ageSlider" min="3" max="15" value="5">
-            <p id="dateDisplay" style="color:#888;">2000年1月1日</p>
+            <p id="dateDisplay" class="target-date">2000年1月1日</p>
+            <input type="range" id="ageSlider" min="0" max="18" value="5">
         </div>
     </div>
 
-    <div class="card focus-area" id="displayArea">
+    <div class="display-card" id="displayArea">
         </div>
 </div>
 
 <script>
     let masterpieceData = [];
 
+    // 1. データの読み込み
     async function loadData() {
-        // カテゴリーを「戦隊」のみに絞って読み込み（想定）
-        const response = await fetch('data.json');
-        const allData = await response.json();
-        masterpieceData = allData.filter(item => item.category === "戦隊")
-                                 .sort((a, b) => new Date(a.start) - new Date(b.start));
-        updateDisplay();
+        try {
+            // キャッシュバスティング対策 (?v=時間)
+            const response = await fetch('data.json?v=' + new Date().getTime());
+            const allData = await response.json();
+            
+            // 戦隊のみ抽出して日付順にソート
+            masterpieceData = allData
+                .filter(item => item.category === "戦隊")
+                .sort((a, b) => new Date(a.start) - new Date(b.start));
+            
+            updateDisplay();
+        } catch (error) {
+            console.error("データの読み込みに失敗:", error);
+            document.getElementById('displayArea').innerHTML = "データの読み込みに失敗しました。";
+        }
     }
 
+    // 2. 表示の更新
     function updateDisplay() {
-        const birthDate = new Date(document.getElementById('birthDate').value);
+        const birthDateVal = document.getElementById('birthDate').value;
+        if (!birthDateVal) return;
+
+        const birthDate = new Date(birthDateVal);
         const age = parseInt(document.getElementById('ageSlider').value);
+        
         const targetDate = new Date(birthDate);
         targetDate.setFullYear(birthDate.getFullYear() + age);
         
+        // 日付ラベル表示
         document.getElementById('ageDisplay').innerText = `${age} 歳のころ`;
-        document.getElementById('dateDisplay').innerText = `${targetDate.getFullYear()}年${targetDate.getMonth()+1}月${targetDate.getDate()}日`;
+        document.getElementById('dateDisplay').innerText = 
+            `${targetDate.getFullYear()}年${targetDate.getMonth()+1}月${targetDate.getDate()}日`;
 
-        // 現在の作品のインデックスを探す
-        const currentIndex = masterpieceData.findIndex(item => {
+        // 作品検索ロジック
+        let currentIndex = masterpieceData.findIndex(item => {
             const start = new Date(item.start);
             const end = new Date(item.end);
             return targetDate >= start && targetDate <= end;
         });
 
-        renderThreeTier(currentIndex);
-    }
+        let currentItem, prevItem, nextItem;
 
-    function renderThreeTier(index) {
-        const area = document.getElementById('displayArea');
-        area.innerHTML = '';
+        if (currentIndex !== -1) {
+            // 【放送期間中の場合】
+            currentItem = masterpieceData[currentIndex];
+            prevItem = masterpieceData[currentIndex - 1];
+            nextItem = masterpieceData[currentIndex + 1];
+        } else {
+            // 【放送空白期間の場合】
+            // 直近の前作を探す
+            const prevs = masterpieceData.filter(item => new Date(item.end) < targetDate);
+            prevItem = prevs.length > 0 ? prevs[prevs.length - 1] : null;
 
-        if (index === -1) {
-            area.innerHTML = '<p style="text-align:center; color:#999;">データがありません</p>';
-            return;
+            // 直近の次作を探す
+            nextItem = masterpieceData.find(item => new Date(item.start) > targetDate);
+
+            currentItem = { title: "（作品放映なし）", start: "-", end: "-" };
         }
 
-        const current = masterpieceData[index];
-        const prev = masterpieceData[index - 1];
-        const next = masterpieceData[index + 1];
-
-        // 1段目（前：左寄せ）
-        const prevHtml = prev ? `<div class="prev-item">前作：${prev.title}</div>` : '<div class="prev-item">-</div>';
-        
-        // 2段目（今：中央大）
-        const currentHtml = `
-            <div class="current-item">
-                <span class="title">${current.title}</span>
-                <span class="period">${current.start} 〜 ${current.end}</span>
-            </div>
-        `;
-        
-        // 3段目（次：右寄せ）
-        const nextHtml = next ? `<div class="next-item">次作：${next.title}</div>` : '<div class="next-item">-</div>';
-
-        area.innerHTML = prevHtml + currentHtml + nextHtml;
+        render(currentItem, prevItem, nextItem);
     }
 
+    // 3. HTMLへのレンダリング
+    function render(current, prev, next) {
+        const area = document.getElementById('displayArea');
+        
+        const isNone = current.title === "（作品放映なし）";
+        const titleClass = isNone ? "title none-title" : "title";
+
+        area.innerHTML = `
+            <div class="prev-item">
+                ${prev ? '前作：' + prev.title : '-'}
+            </div>
+            <div class="current-item">
+                <span class="${titleClass}">${current.title}</span>
+                <span class="period">${current.start} 〜 ${current.end}</span>
+            </div>
+            <div class="next-item">
+                ${next ? '次作：' + next.title : '-'}
+            </div>
+        `;
+    }
+
+    // イベント設定
     document.getElementById('ageSlider').addEventListener('input', updateDisplay);
     document.getElementById('birthDate').addEventListener('change', updateDisplay);
+
+    // 初回実行
     loadData();
 </script>
 
