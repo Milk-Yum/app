@@ -9,6 +9,7 @@
             --sentai-color: #e67e22; 
             --rider-color: #27ae60; 
             --ultra-color: #2980b9; 
+            --metal-color: #7f8c8d;
             --bg-color: #f0f2f5; 
             --text-muted: #999; 
         }
@@ -17,26 +18,29 @@
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); margin-bottom: 20px; }
         
         /* タブメニュー */
-        .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
-        .tab-btn { flex: 1; padding: 12px 5px; border: none; border-radius: 8px; background: #ddd; cursor: pointer; font-weight: bold; font-size: 0.85rem; transition: 0.3s; }
+        .tabs { display: flex; gap: 5px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
+        .tab-btn { flex: 1; padding: 12px 2px; border: none; border-radius: 8px; background: #ddd; cursor: pointer; font-weight: bold; font-size: 0.8rem; transition: 0.3s; white-space: nowrap; }
         .tab-btn.active[data-cat="戦隊"] { background: var(--sentai-color); color: white; }
         .tab-btn.active[data-cat="仮面ライダー"] { background: var(--rider-color); color: white; }
         .tab-btn.active[data-cat="ウルトラマン"] { background: var(--ultra-color); color: white; }
+        .tab-btn.active[data-cat="メタルヒーロー"] { background: var(--metal-color); color: white; }
 
-        .age-badge { display: inline-block; padding: 5px 25px; border-radius: 20px; font-size: 1.4rem; font-weight: bold; color: white; margin-bottom: 10px; }
+        .age-badge { display: inline-block; padding: 5px 25px; border-radius: 20px; font-size: 1.4rem; font-weight: bold; color: white; margin-bottom: 10px; transition: background 0.3s; }
         .age-badge.戦隊 { background: var(--sentai-color); }
         .age-badge.仮面ライダー { background: var(--rider-color); }
         .age-badge.ウルトラマン { background: var(--ultra-color); }
+        .age-badge.メタルヒーロー { background: var(--metal-color); }
 
         /* 表示エリア */
-        .display-card { background: white; padding: 30px 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); min-height: 220px; display: flex; flex-direction: column; justify-content: space-between; }
-        .prev-item { text-align: left; color: var(--text-muted); border-bottom: 1px dashed #eee; padding-bottom: 8px; font-size: 0.9rem; }
-        .current-item { text-align: center; padding: 15px 0; }
-        .current-item .title { font-size: 1.8rem; font-weight: bold; line-height: 1.3; margin: 10px 0; }
+        .display-card { background: white; padding: 30px 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); min-height: 240px; display: flex; flex-direction: column; justify-content: space-between; }
+        .prev-item { text-align: left; color: var(--text-muted); border-bottom: 1px dashed #eee; padding-bottom: 10px; font-size: 0.85rem; min-height: 1.2rem; }
+        .current-item { text-align: center; padding: 20px 0; }
+        .current-item .title { font-size: 1.8rem; font-weight: bold; line-height: 1.3; margin-bottom: 10px; display: block; }
         .current-item .period { font-size: 0.8rem; color: var(--text-muted); display: block; }
-        .next-item { text-align: right; color: var(--text-muted); border-top: 1px dashed #eee; padding-top: 8px; font-size: 0.9rem; }
+        .next-item { text-align: right; color: var(--text-muted); border-top: 1px dashed #eee; padding-top: 10px; font-size: 0.85rem; min-height: 1.2rem; }
         
         input[type="range"] { width: 100%; margin-top: 15px; cursor: pointer; }
+        input[type="date"] { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; box-sizing: border-box; margin-bottom: 20px; font-size: 1rem; }
     </style>
 </head>
 <body>
@@ -46,29 +50,39 @@
         <button class="tab-btn active" data-cat="戦隊">戦隊</button>
         <button class="tab-btn" data-cat="仮面ライダー">ライダー</button>
         <button class="tab-btn" data-cat="ウルトラマン">ウルトラ</button>
+        <button class="tab-btn" data-cat="メタルヒーロー">メタル</button>
     </div>
 
     <div class="card" style="text-align:center;">
-        <label style="display:block; text-align:left; font-size:0.8rem; color:#666; margin-bottom:5px;">誕生日</label>
-        <input type="date" id="birthDate" value="1995-01-01" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd; box-sizing:border-box; margin-bottom:20px;">
+        <label style="display:block; text-align:left; font-size:0.8rem; color:#666; margin-bottom:5px;">あなたの誕生日</label>
+        <input type="date" id="birthDate" value="1985-01-01">
+        
         <span id="ageDisplay" class="age-badge 戦隊">5 歳のころ</span>
-        <p id="dateDisplay" style="color:#666; margin:0; font-weight: bold;">2000年1月1日</p>
-        <input type="range" id="ageSlider" min="0" max="20" value="5">
+        <p id="dateDisplay" style="color:#666; margin:0; font-weight: bold;">1990年1月1日</p>
+        <input type="range" id="ageSlider" min="0" max="25" value="5">
     </div>
 
-    <div class="display-card" id="displayArea"></div>
+    <div class="display-card" id="displayArea">
+        </div>
 </div>
 
 <script>
     let allData = [];
     let currentCategory = "戦隊";
 
+    // データの読み込み
     async function loadData() {
-        const response = await fetch('data.json?v=' + new Date().getTime());
-        allData = await response.json();
-        updateDisplay();
+        try {
+            const response = await fetch('data.json?v=' + new Date().getTime());
+            allData = await response.json();
+            updateDisplay();
+        } catch (error) {
+            console.error("データ読み込み失敗:", error);
+            document.getElementById('displayArea').innerHTML = "データの読み込みに失敗しました。";
+        }
     }
 
+    // メインの更新処理
     function updateDisplay() {
         const birthDateInput = document.getElementById('birthDate').value;
         if (!birthDateInput) return;
@@ -78,40 +92,53 @@
         const targetDate = new Date(birthDate);
         targetDate.setFullYear(birthDate.getFullYear() + age);
         
+        // ヘッダーテキスト更新
         document.getElementById('ageDisplay').innerText = `${age} 歳のころ`;
-        document.getElementById('dateDisplay').innerText = `${targetDate.getFullYear()}年${targetDate.getMonth()+1}月${targetDate.getDate()}日`;
+        document.getElementById('dateDisplay').innerText = 
+            `${targetDate.getFullYear()}年${targetDate.getMonth()+1}月${targetDate.getDate()}日 ごろ`;
         
+        // 選択中カテゴリのデータを日付順にソート
         const filtered = allData.filter(item => item.category === currentCategory)
                                 .sort((a, b) => new Date(a.start) - new Date(b.start));
 
-        let idx = filtered.findIndex(item => targetDate >= new Date(item.start) && targetDate <= new Date(item.end));
+        // 現在放映中の作品を探す
+        let idx = filtered.findIndex(item => {
+            const start = new Date(item.start);
+            const end = new Date(item.end);
+            return targetDate >= start && targetDate <= end;
+        });
+
         let current, prev, next;
 
         if (idx !== -1) {
+            // 放映中
             current = filtered[idx];
             prev = filtered[idx - 1];
             next = filtered[idx + 1];
         } else {
-            // 直近の前作を探す
+            // 空白期間：直近の前作と次作を探す
             const prevs = filtered.filter(item => new Date(item.end) < targetDate);
             prev = prevs.length > 0 ? prevs[prevs.length - 1] : null;
-
-            // 直近の次作を探す
             next = filtered.find(item => new Date(item.start) > targetDate);
-
-            current = { title: "（作品なし）", start: "-", end: "-" };
+            current = { title: "（放映なし）", start: "-", end: "-" };
         }
 
         render(current, prev, next);
     }
 
+    // HTML描画
     function render(c, p, n) {
         let themeColor;
-        if(currentCategory === "戦隊") themeColor = "var(--sentai-color)";
-        else if(currentCategory === "仮面ライダー") themeColor = "var(--rider-color)";
-        else themeColor = "var(--ultra-color)";
+        const colors = {
+            "戦隊": "var(--sentai-color)",
+            "仮面ライダー": "var(--rider-color)",
+            "ウルトラマン": "var(--ultra-color)",
+            "メタルヒーロー": "var(--metal-color)"
+        };
+        themeColor = colors[currentCategory];
 
-        document.getElementById('displayArea').innerHTML = `
+        const area = document.getElementById('displayArea');
+        area.innerHTML = `
             <div class="prev-item">${p ? '前作：' + p.title : '-'}</div>
             <div class="current-item">
                 <span class="title" style="color:${c.start==='-'?'#ccc':themeColor}">${c.title}</span>
@@ -121,6 +148,7 @@
         `;
     }
 
+    // タブ切り替えイベント
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             document.querySelector('.tab-btn.active').classList.remove('active');
@@ -131,9 +159,13 @@
         });
     });
 
+    // 入力イベント
     document.getElementById('ageSlider').addEventListener('input', updateDisplay);
     document.getElementById('birthDate').addEventListener('change', updateDisplay);
+
+    // 起動
     loadData();
 </script>
+
 </body>
 </html>
