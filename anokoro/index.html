@@ -5,149 +5,114 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>あの頃のヒーロー - anokoro</title>
     <style>
-        :root { --sentai-color: #e67e22; --bg-color: #f0f2f5; --text-muted: #999; }
-        body { font-family: "Helvetica Neue", Arial, "Hiragino Kaku Gothic ProN", "Hiragino Sans", sans-serif; background: var(--bg-color); margin: 0; padding: 20px; color: #333; }
+        :root { --sentai-color: #e67e22; --rider-color: #27ae60; --bg-color: #f0f2f5; --text-muted: #999; }
+        body { font-family: sans-serif; background: var(--bg-color); margin: 0; padding: 20px; color: #333; }
         .container { max-width: 500px; margin: 0 auto; }
-        
-        /* 入力カード */
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); margin-bottom: 20px; }
-        .input-group { margin-bottom: 15px; }
-        label { display: block; font-size: 0.8rem; font-weight: bold; color: #666; margin-bottom: 5px; }
-        input[type="date"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; font-size: 1rem; box-sizing: border-box; }
         
-        /* スライダー */
-        .slider-section { text-align: center; padding-top: 10px; }
-        .age-badge { display: inline-block; background: var(--sentai-color); color: white; padding: 5px 20px; border-radius: 20px; font-size: 1.4rem; font-weight: bold; margin-bottom: 5px; }
-        .target-date { font-size: 1rem; color: #666; margin-bottom: 15px; }
-        input[type="range"] { width: 100%; cursor: pointer; height: 8px; border-radius: 5px; background: #ddd; outline: none; }
+        /* タブメニュー */
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+        .tab-btn { flex: 1; padding: 10px; border: none; border-radius: 8px; background: #ddd; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .tab-btn.active[data-cat="戦隊"] { background: var(--sentai-color); color: white; }
+        .tab-btn.active[data-cat="仮面ライダー"] { background: var(--rider-color); color: white; }
 
-        /* 3段表示エリア */
-        .display-card { background: white; padding: 30px 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); min-height: 200px; display: flex; flex-direction: column; justify-content: space-between; gap: 20px; }
-        
-        .prev-item { text-align: left; font-size: 0.9rem; color: var(--text-muted); border-bottom: 1px dashed #eee; padding-bottom: 8px; }
-        .current-item { text-align: center; padding: 10px 0; }
-        .current-item .title { font-size: 1.8rem; font-weight: bold; color: var(--sentai-color); display: block; line-height: 1.3; }
+        .age-badge { display: inline-block; padding: 5px 20px; border-radius: 20px; font-size: 1.4rem; font-weight: bold; color: white; margin-bottom: 10px; }
+        .age-badge.戦隊 { background: var(--sentai-color); }
+        .age-badge.仮面ライダー { background: var(--rider-color); }
+
+        /* 表示エリア */
+        .display-card { background: white; padding: 30px 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); min-height: 220px; display: flex; flex-direction: column; justify-content: space-between; }
+        .prev-item { text-align: left; color: var(--text-muted); border-bottom: 1px dashed #eee; padding-bottom: 8px; font-size: 0.9rem; }
+        .current-item { text-align: center; padding: 15px 0; }
+        .current-item .title { font-size: 1.8rem; font-weight: bold; line-height: 1.3; }
         .current-item .period { font-size: 0.8rem; color: var(--text-muted); margin-top: 10px; display: block; }
-        .next-item { text-align: right; font-size: 0.9rem; color: var(--text-muted); border-top: 1px dashed #eee; padding-top: 8px; }
-
-        .none-title { color: #ccc !important; font-style: italic; }
+        .next-item { text-align: right; color: var(--text-muted); border-top: 1px dashed #eee; padding-top: 8px; font-size: 0.9rem; }
+        
+        input[type="range"] { width: 100%; margin-top: 15px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="card">
-        <div class="input-group">
-            <label>誕生日</label>
-            <input type="date" id="birthDate" value="1995-01-01">
-        </div>
-        
-        <div class="slider-section">
-            <span id="ageDisplay" class="age-badge">5 歳のころ</span>
-            <p id="dateDisplay" class="target-date">2000年1月1日</p>
-            <input type="range" id="ageSlider" min="0" max="18" value="5">
-        </div>
+    <div class="tabs">
+        <button class="tab-btn active" data-cat="戦隊">戦隊</button>
+        <button class="tab-btn" data-cat="仮面ライダー">ライダー</button>
     </div>
 
-    <div class="display-card" id="displayArea">
-        </div>
+    <div class="card" style="text-align:center;">
+        <input type="date" id="birthDate" value="1995-01-01" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd; box-sizing:border-box; margin-bottom:20px;">
+        <span id="ageDisplay" class="age-badge 戦隊">5 歳のころ</span>
+        <p id="dateDisplay" style="color:#666; margin:0;">2000年1月1日</p>
+        <input type="range" id="ageSlider" min="0" max="25" value="5">
+    </div>
+
+    <div class="display-card" id="displayArea"></div>
 </div>
 
 <script>
-    let masterpieceData = [];
+    let allData = [];
+    let currentCategory = "戦隊";
 
-    // 1. データの読み込み
     async function loadData() {
-        try {
-            // キャッシュバスティング対策 (?v=時間)
-            const response = await fetch('data.json?v=' + new Date().getTime());
-            const allData = await response.json();
-            
-            // 戦隊のみ抽出して日付順にソート
-            masterpieceData = allData
-                .filter(item => item.category === "戦隊")
-                .sort((a, b) => new Date(a.start) - new Date(b.start));
-            
-            updateDisplay();
-        } catch (error) {
-            console.error("データの読み込みに失敗:", error);
-            document.getElementById('displayArea').innerHTML = "データの読み込みに失敗しました。";
-        }
+        const response = await fetch('data.json?v=' + new Date().getTime());
+        allData = await response.json();
+        updateDisplay();
     }
 
-    // 2. 表示の更新
     function updateDisplay() {
-        const birthDateVal = document.getElementById('birthDate').value;
-        if (!birthDateVal) return;
-
-        const birthDate = new Date(birthDateVal);
+        const birthDate = new Date(document.getElementById('birthDate').value);
         const age = parseInt(document.getElementById('ageSlider').value);
-        
         const targetDate = new Date(birthDate);
         targetDate.setFullYear(birthDate.getFullYear() + age);
         
-        // 日付ラベル表示
         document.getElementById('ageDisplay').innerText = `${age} 歳のころ`;
-        document.getElementById('dateDisplay').innerText = 
-            `${targetDate.getFullYear()}年${targetDate.getMonth()+1}月${targetDate.getDate()}日`;
+        document.getElementById('dateDisplay').innerText = `${targetDate.getFullYear()}年${targetDate.getMonth()+1}月${targetDate.getDate()}日`;
+        
+        // カテゴリで絞り込み
+        const filtered = allData.filter(item => item.category === currentCategory)
+                                .sort((a, b) => new Date(a.start) - new Date(b.start));
 
-        // 作品検索ロジック
-        let currentIndex = masterpieceData.findIndex(item => {
-            const start = new Date(item.start);
-            const end = new Date(item.end);
-            return targetDate >= start && targetDate <= end;
-        });
+        let idx = filtered.findIndex(item => targetDate >= new Date(item.start) && targetDate <= new Date(item.end));
+        let current, prev, next;
 
-        let currentItem, prevItem, nextItem;
-
-        if (currentIndex !== -1) {
-            // 【放送期間中の場合】
-            currentItem = masterpieceData[currentIndex];
-            prevItem = masterpieceData[currentIndex - 1];
-            nextItem = masterpieceData[currentIndex + 1];
+        if (idx !== -1) {
+            current = filtered[idx];
+            prev = filtered[idx - 1];
+            next = filtered[idx + 1];
         } else {
-            // 【放送空白期間の場合】
-            // 直近の前作を探す
-            const prevs = masterpieceData.filter(item => new Date(item.end) < targetDate);
-            prevItem = prevs.length > 0 ? prevs[prevs.length - 1] : null;
-
-            // 直近の次作を探す
-            nextItem = masterpieceData.find(item => new Date(item.start) > targetDate);
-
-            currentItem = { title: "（作品放映なし）", start: "-", end: "-" };
+            prev = filtered.filter(item => new Date(item.end) < targetDate).slice(-1)[0];
+            next = filtered.find(item => new Date(item.start) > targetDate);
+            current = { title: "（作品なし）", start: "-", end: "-" };
         }
 
-        render(currentItem, prevItem, nextItem);
+        render(current, prev, next);
     }
 
-    // 3. HTMLへのレンダリング
-    function render(current, prev, next) {
-        const area = document.getElementById('displayArea');
-        
-        const isNone = current.title === "（作品放映なし）";
-        const titleClass = isNone ? "title none-title" : "title";
-
-        area.innerHTML = `
-            <div class="prev-item">
-                ${prev ? '前作：' + prev.title : '-'}
-            </div>
+    function render(c, p, n) {
+        const color = currentCategory === "戦隊" ? "var(--sentai-color)" : "var(--rider-color)";
+        document.getElementById('displayArea').innerHTML = `
+            <div class="prev-item">${p ? '前：' + p.title : '-'}</div>
             <div class="current-item">
-                <span class="${titleClass}">${current.title}</span>
-                <span class="period">${current.start} 〜 ${current.end}</span>
+                <span class="title" style="color:${c.start==='-'?'#ccc':color}">${c.title}</span>
+                <span class="period">${c.start} 〜 ${c.end}</span>
             </div>
-            <div class="next-item">
-                ${next ? '次作：' + next.title : '-'}
-            </div>
+            <div class="next-item">${n ? '次：' + n.title : '-'}</div>
         `;
     }
 
-    // イベント設定
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelector('.tab-btn.active').classList.remove('active');
+            e.target.classList.add('active');
+            currentCategory = e.target.dataset.cat;
+            document.getElementById('ageDisplay').className = `age-badge ${currentCategory}`;
+            updateDisplay();
+        });
+    });
+
     document.getElementById('ageSlider').addEventListener('input', updateDisplay);
     document.getElementById('birthDate').addEventListener('change', updateDisplay);
-
-    // 初回実行
     loadData();
 </script>
-
 </body>
 </html>
