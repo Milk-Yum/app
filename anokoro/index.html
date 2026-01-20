@@ -5,30 +5,38 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>あの頃のヒーロー - anokoro</title>
     <style>
-        :root { --sentai-color: #e67e22; --rider-color: #27ae60; --bg-color: #f0f2f5; --text-muted: #999; }
+        :root { 
+            --sentai-color: #e67e22; 
+            --rider-color: #27ae60; 
+            --ultra-color: #2980b9; 
+            --bg-color: #f0f2f5; 
+            --text-muted: #999; 
+        }
         body { font-family: sans-serif; background: var(--bg-color); margin: 0; padding: 20px; color: #333; }
         .container { max-width: 500px; margin: 0 auto; }
         .card { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); margin-bottom: 20px; }
         
         /* タブメニュー */
-        .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab-btn { flex: 1; padding: 10px; border: none; border-radius: 8px; background: #ddd; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+        .tab-btn { flex: 1; padding: 12px 5px; border: none; border-radius: 8px; background: #ddd; cursor: pointer; font-weight: bold; font-size: 0.85rem; transition: 0.3s; }
         .tab-btn.active[data-cat="戦隊"] { background: var(--sentai-color); color: white; }
         .tab-btn.active[data-cat="仮面ライダー"] { background: var(--rider-color); color: white; }
+        .tab-btn.active[data-cat="ウルトラマン"] { background: var(--ultra-color); color: white; }
 
-        .age-badge { display: inline-block; padding: 5px 20px; border-radius: 20px; font-size: 1.4rem; font-weight: bold; color: white; margin-bottom: 10px; }
+        .age-badge { display: inline-block; padding: 5px 25px; border-radius: 20px; font-size: 1.4rem; font-weight: bold; color: white; margin-bottom: 10px; }
         .age-badge.戦隊 { background: var(--sentai-color); }
         .age-badge.仮面ライダー { background: var(--rider-color); }
+        .age-badge.ウルトラマン { background: var(--ultra-color); }
 
         /* 表示エリア */
         .display-card { background: white; padding: 30px 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); min-height: 220px; display: flex; flex-direction: column; justify-content: space-between; }
         .prev-item { text-align: left; color: var(--text-muted); border-bottom: 1px dashed #eee; padding-bottom: 8px; font-size: 0.9rem; }
         .current-item { text-align: center; padding: 15px 0; }
-        .current-item .title { font-size: 1.8rem; font-weight: bold; line-height: 1.3; }
-        .current-item .period { font-size: 0.8rem; color: var(--text-muted); margin-top: 10px; display: block; }
+        .current-item .title { font-size: 1.8rem; font-weight: bold; line-height: 1.3; margin: 10px 0; }
+        .current-item .period { font-size: 0.8rem; color: var(--text-muted); display: block; }
         .next-item { text-align: right; color: var(--text-muted); border-top: 1px dashed #eee; padding-top: 8px; font-size: 0.9rem; }
         
-        input[type="range"] { width: 100%; margin-top: 15px; }
+        input[type="range"] { width: 100%; margin-top: 15px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -37,13 +45,15 @@
     <div class="tabs">
         <button class="tab-btn active" data-cat="戦隊">戦隊</button>
         <button class="tab-btn" data-cat="仮面ライダー">ライダー</button>
+        <button class="tab-btn" data-cat="ウルトラマン">ウルトラ</button>
     </div>
 
     <div class="card" style="text-align:center;">
+        <label style="display:block; text-align:left; font-size:0.8rem; color:#666; margin-bottom:5px;">誕生日</label>
         <input type="date" id="birthDate" value="1995-01-01" style="width:100%; padding:10px; border-radius:8px; border:1px solid #ddd; box-sizing:border-box; margin-bottom:20px;">
         <span id="ageDisplay" class="age-badge 戦隊">5 歳のころ</span>
-        <p id="dateDisplay" style="color:#666; margin:0;">2000年1月1日</p>
-        <input type="range" id="ageSlider" min="0" max="25" value="5">
+        <p id="dateDisplay" style="color:#666; margin:0; font-weight: bold;">2000年1月1日</p>
+        <input type="range" id="ageSlider" min="0" max="20" value="5">
     </div>
 
     <div class="display-card" id="displayArea"></div>
@@ -60,7 +70,10 @@
     }
 
     function updateDisplay() {
-        const birthDate = new Date(document.getElementById('birthDate').value);
+        const birthDateInput = document.getElementById('birthDate').value;
+        if (!birthDateInput) return;
+
+        const birthDate = new Date(birthDateInput);
         const age = parseInt(document.getElementById('ageSlider').value);
         const targetDate = new Date(birthDate);
         targetDate.setFullYear(birthDate.getFullYear() + age);
@@ -68,7 +81,6 @@
         document.getElementById('ageDisplay').innerText = `${age} 歳のころ`;
         document.getElementById('dateDisplay').innerText = `${targetDate.getFullYear()}年${targetDate.getMonth()+1}月${targetDate.getDate()}日`;
         
-        // カテゴリで絞り込み
         const filtered = allData.filter(item => item.category === currentCategory)
                                 .sort((a, b) => new Date(a.start) - new Date(b.start));
 
@@ -80,8 +92,13 @@
             prev = filtered[idx - 1];
             next = filtered[idx + 1];
         } else {
-            prev = filtered.filter(item => new Date(item.end) < targetDate).slice(-1)[0];
+            // 直近の前作を探す
+            const prevs = filtered.filter(item => new Date(item.end) < targetDate);
+            prev = prevs.length > 0 ? prevs[prevs.length - 1] : null;
+
+            // 直近の次作を探す
             next = filtered.find(item => new Date(item.start) > targetDate);
+
             current = { title: "（作品なし）", start: "-", end: "-" };
         }
 
@@ -89,14 +106,18 @@
     }
 
     function render(c, p, n) {
-        const color = currentCategory === "戦隊" ? "var(--sentai-color)" : "var(--rider-color)";
+        let themeColor;
+        if(currentCategory === "戦隊") themeColor = "var(--sentai-color)";
+        else if(currentCategory === "仮面ライダー") themeColor = "var(--rider-color)";
+        else themeColor = "var(--ultra-color)";
+
         document.getElementById('displayArea').innerHTML = `
-            <div class="prev-item">${p ? '前：' + p.title : '-'}</div>
+            <div class="prev-item">${p ? '前作：' + p.title : '-'}</div>
             <div class="current-item">
-                <span class="title" style="color:${c.start==='-'?'#ccc':color}">${c.title}</span>
+                <span class="title" style="color:${c.start==='-'?'#ccc':themeColor}">${c.title}</span>
                 <span class="period">${c.start} 〜 ${c.end}</span>
             </div>
-            <div class="next-item">${n ? '次：' + n.title : '-'}</div>
+            <div class="next-item">${n ? '次作：' + n.title : '-'}</div>
         `;
     }
 
