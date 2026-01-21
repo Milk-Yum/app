@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>あの頃のヒーロー - anokoro</title>
     <style>
         :root { 
@@ -11,20 +11,22 @@
         }
         body { 
             font-family: 'Segoe UI', sans-serif; background-color: var(--bg-base);
-            margin: 0; padding: 20px; color: #fff; transition: background 0.5s ease; min-height: 100vh; overflow-x: hidden;
+            margin: 0; padding: 20px; color: #fff; transition: background 0.5s ease; 
+            min-height: 100vh; overflow-x: hidden;
         }
         body.戦隊 { background-color: #4a0000; }
         body.仮面ライダー { background-color: #002b00; }
         body.ウルトラマン { background-color: #001a33; }
         body.メタルヒーロー { background-color: #2c3e50; }
 
-        .container { max-width: 500px; margin: 0 auto; position: relative; z-index: 2; }
+        .container { max-width: 500px; margin: 0 auto; position: relative; z-index: 10; }
 
         /* タブ */
         .tabs { display: flex; gap: 8px; margin-bottom: 25px; overflow-x: auto; padding: 5px; }
         .tab-btn { 
             flex: 1; padding: 14px 5px; border: none; border-radius: 12px; 
-            background: rgba(255,255,255,0.1); color: #aaa; cursor: pointer; font-weight: bold; font-size: 0.8rem;
+            background: rgba(255,255,255,0.1); color: #aaa; cursor: pointer; font-weight: bold; 
+            font-size: 0.8rem; -webkit-tap-highlight-color: transparent;
         }
         .tab-btn.active { color: #fff; transform: translateY(-2px); }
         .tab-btn.active[data-cat="戦隊"] { background: var(--sentai-color); }
@@ -34,7 +36,8 @@
 
         .card { 
             background: rgba(255,255,255,0.05); padding: 25px; border-radius: 20px; 
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3); margin-bottom: 25px; backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3); margin-bottom: 25px; 
+            backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1);
         }
         
         .birth-row { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
@@ -43,34 +46,44 @@
         
         .age-badge { display: inline-block; padding: 8px 30px; border-radius: 30px; font-size: 1.6rem; font-weight: 900; }
 
+        /* スライダー調整エリア */
         .slider-controls { display: flex; align-items: center; gap: 15px; margin-top: 15px; }
-        .step-btn { background: rgba(255,255,255,0.1); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; }
+        .step-btn { 
+            background: rgba(255,255,255,0.1); border: none; color: white; 
+            width: 44px; height: 44px; border-radius: 50%; cursor: pointer; 
+            font-size: 1.2rem; display: flex; align-items: center; justify-content: center;
+            /* iPhoneのズーム防止と選択防止 */
+            touch-action: manipulation;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
         input[type="range"] { flex: 1; -webkit-appearance: none; height: 8px; border-radius: 5px; background: rgba(255,255,255,0.1); outline: none; }
         input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: #fff; cursor: pointer; }
 
         .display-card { 
-            background: rgba(0,0,0,0.4); padding: 30px 25px; border-radius: 25px; border: 2px solid rgba(255,255,255,0.05); min-height: 280px;
-            display: flex; flex-direction: column; justify-content: space-between; position: relative;
+            background: rgba(0,0,0,0.4); padding: 30px 25px; border-radius: 25px; 
+            border: 2px solid rgba(255,255,255,0.05); min-height: 280px;
+            display: flex; flex-direction: column; justify-content: space-between;
         }
         .prev-item { text-align: left; color: #888; font-size: 0.85rem; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; }
         .current-item { text-align: center; padding: 10px 0; }
         .current-item .title { font-size: 2rem; font-weight: 900; line-height: 1.2; margin: 15px 0; display: block; }
         .next-item { text-align: right; color: #888; font-size: 0.85rem; font-weight: bold; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 10px; }
 
-        /* 紙吹雪のスタイル */
+        /* 紙吹雪：最前面（z-index: 9999） */
         .confetti {
-            position: fixed; width: 10px; height: 10px; background-color: #f00; z-index: 1;
-            top: -10px; animation: fall linear forwards;
+            position: fixed; width: 10px; height: 10px; z-index: 9999;
+            top: -10px; pointer-events: none; animation: fall linear forwards;
         }
         @keyframes fall {
-            to { transform: translateY(100vh) rotate(720deg); }
+            to { transform: translateY(110vh) rotate(720deg); }
         }
 
-        /* お祝いメッセージ */
         #birthdayMsg {
             position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
             font-size: 3rem; font-weight: 900; color: #ffeb3b; text-shadow: 0 0 20px rgba(255,235,59,0.8);
-            z-index: 100; pointer-events: none; opacity: 0; transition: opacity 0.5s;
+            z-index: 10000; pointer-events: none; opacity: 0; transition: opacity 0.5s; text-align: center; width: 100%;
         }
     </style>
 </head>
@@ -104,33 +117,39 @@
 <script>
     let allData = [];
     let currentCategory = "戦隊";
-    let celebratedAges = new Set(); // 一度祝った年齢を記録
+    let celebratedAges = new Set();
 
     async function loadData() {
         const savedBirth = localStorage.getItem('userBirthDate');
         document.getElementById('birthDate').value = savedBirth || "1995-01-01";
-        const response = await fetch('data.json?v=' + new Date().getTime());
-        allData = await response.json();
-        updateDisplay();
+        try {
+            const response = await fetch('data.json?v=' + new Date().getTime());
+            allData = await response.json();
+            updateDisplay();
+        } catch(e) { console.error("Data load error", e); }
     }
 
     function stepSlider(val) {
         const slider = document.getElementById('ageSlider');
-        slider.value = parseInt(slider.value) + val;
-        updateDisplay();
+        let nextVal = parseInt(slider.value) + val;
+        if (nextVal >= slider.min && nextVal <= slider.max) {
+            slider.value = nextVal;
+            updateDisplay();
+        }
     }
 
     function createConfetti() {
         const colors = ['#ff4757', '#2ed573', '#1e90ff', '#ffeb3b', '#ffffff'];
-        for (let i = 0; i < 50; i++) {
+        for (let i = 0; i < 60; i++) {
             const c = document.createElement('div');
             c.className = 'confetti';
             c.style.left = Math.random() * 100 + 'vw';
             c.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
-            c.style.animationDuration = (Math.random() * 3 + 2) + 's';
-            c.style.opacity = Math.random();
+            c.style.animationDuration = (Math.random() * 2 + 2) + 's';
+            c.style.width = (Math.random() * 8 + 5) + 'px';
+            c.style.height = (Math.random() * 8 + 5) + 'px';
             document.body.appendChild(c);
-            setTimeout(() => c.remove(), 5000);
+            setTimeout(() => c.remove(), 4000);
         }
     }
 
@@ -143,14 +162,12 @@
         const age = parseInt(document.getElementById('ageSlider').value);
         const today = new Date();
         
-        // 現在の年齢計算
         let currentAge = today.getFullYear() - birthDate.getFullYear();
         if (today.getMonth() < birthDate.getMonth() || (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate())) {
             currentAge--;
         }
         document.getElementById('currentAgeDisplay').innerText = `現在 ${currentAge} 歳`;
 
-        // お祝い判定: スライダーが今の年齢、かつ今日が誕生日、かつ未実施
         const isBirthdayToday = today.getMonth() === birthDate.getMonth() && today.getDate() === birthDate.getDate();
         if (age === currentAge && isBirthdayToday && !celebratedAges.has(age)) {
             createConfetti();
